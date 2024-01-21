@@ -20,6 +20,9 @@
     "rootDir": "./src",
     "sourceMap": true,
   },
-  "include": ["./sst-env.d.ts", "./src/**/*.ts"],
+  "include": [
+    "src/**/*.ts", 
+    "src/**/*.json"
+  ],
   "exclude": ["./node_modules/**"]
 }
