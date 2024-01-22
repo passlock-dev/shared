@@ -1,24 +1,32 @@
 {
   "name": "@passlock/shared",
   "version": "0.0.0",
-  "description": "",
-  "keywords": [],
+  "description": "Shared code use by Passlock frontend libraries & backend SDKs",
+  "keywords": ["passlock"],
   "author": {
     "name": "Toby Hobson",
     "email": "toby@passlock.dev"
   },
   "license": "MIT",
-  "homepage": "https://github.com/passlock-dev/passkeys",
+  "homepage": "https://github.com/passlock-dev/shared",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./error": "./dist/error/error.js",
-    "./schema": "./dist/schema/schema.js",
-    "./logging": "./dist/logging/logging.js",
-    "./event": "./dist/event.js",
-    "./src/": "./src/"
+    "./error": {
+      "import": "./dist/error/error.js",
+      "types": "./dist/error/error.d.ts"
+    },
+    "./schema": {
+      "import": "./dist/schema/schema.js",
+      "types": "./dist/schema/schema.d.ts"
+    },
+    "./logging": {
+      "import": "./dist/logging/logging.js",
+      "types": "./dist/logging/logging.d.ts"
+    },
+    "./event": {
+      "import": "./dist/event.js",
+      "types": "./dist/event.d.ts"
+    }
   },
   "files": [
     "dist",
@@ -26,26 +34,28 @@
   ],
   "scripts": {
     "clean": "rimraf dist",
-    "dev": "vite --host --open",
     "test": "vitest",
     "test:ui": "vitest --coverage.enabled=true --ui",
     "coverage": "vitest run --coverage",
-    "build": "pnpm run clean && tsc",
-    "watch": "tsc && vite build --watch",
-    "typecheck": "tsc -noEmit",
+    "build": "tsc --build",
+    "watch": "tsc --build --watch",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint --ext .ts src",
     "lint:fix": "pnpm run lint --fix",
-    "format": "prettier --write \"src/**/*.+(js|ts|json)\""
+    "format": "prettier --write \"src/**/*.+(js|ts|json)\"",
+    "publish": "pnpm publish --no-git-checks --access public",
+    "ncu": "ncu",
+    "ncu:save": "ncu -u"
   },
   "dependencies": {
-    "@effect/schema": "^0.60.4",
+    "@effect/schema": "^0.60.6",
     "effect": "2.1.2"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.2",
     "@types/node": "^20.11.5",
-    "@typescript-eslint/eslint-plugin": "^6.19.0",
-    "@typescript-eslint/parser": "^6.19.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.1",
+    "@typescript-eslint/parser": "^6.19.1",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-import-resolver-typescript": "^3.6.1",

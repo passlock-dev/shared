@@ -1,3 +1,5 @@
+import { Effect } from 'effect'
+
 export enum ErrorCode {
   OperationAborted = 'OperationAborted',
   PasskeysNotSupported = 'PasskeysNotSupported',
@@ -6,12 +8,14 @@ export enum ErrorCode {
   PasskeyNotFound = 'PasskeyNotFound',
   InvalidTenancy = 'InvalidTenancy',
   InvalidClientID = 'InvalidClientID',
+  InvalidApiKey = 'InvalidApiKey',
   UserNotFound = 'UserNotFound',
+  UserDisabled = 'UserDisabled',
   InvalidRequest = 'InvalidRequest',
   InternalServerError = 'InternalServerError',
   InternalBrowserError = 'InternalBrowserError',
   VerificationFailure = 'VerificationFailure',
-  OtherError = 'OtherError'
+  OtherError = 'OtherError',
 }
 
 export class PasslockError extends Error {
@@ -45,4 +49,24 @@ export const isPasslockError = (cause: unknown): cause is PasslockError => {
   if (typeof cause.code !== 'string') return false
 
   return true
+}
+
+/**
+ * Generate a Left(PasslockError)
+ *
+ * @param message
+ * @param code
+ * @param detail
+ * @returns
+ */
+export const fail = (
+  message: string,
+  code: ErrorCode,
+  detail?: unknown,
+): Effect.Effect<never, PasslockError, never> => {
+  return Effect.fail(error(message, code, detail))
+}
+
+export const error = (message: string, code: ErrorCode, detail?: unknown): PasslockError => {
+  return new PasslockError({ message, code, detail })
 }

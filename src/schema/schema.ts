@@ -4,7 +4,7 @@ import * as S from '@effect/schema/Schema'
 import { formatError } from '@effect/schema/TreeFormatter'
 import { Effect as E, pipe } from 'effect'
 
-import { ErrorCode, PasslockError } from '../error/error'
+import { ErrorCode, error } from '../error/error'
 import { PasslockLogger } from '../logging/logging'
 
 /* Components */
@@ -42,6 +42,8 @@ const UserVerification = S.union(
   S.literal('required'),
 )
 
+export type UserVerification = S.Schema.To<typeof UserVerification>
+
 const ResidentKey = S.union(S.literal('discouraged'), S.literal('preferred'), S.literal('required'))
 
 const AuthenticatorSelection = S.struct({
@@ -67,6 +69,7 @@ export const RegistrationRequest = S.struct({
   email: S.string,
   firstName: S.string,
   lastName: S.string,
+  userVerification: S.optional(UserVerification),
 })
 
 /**
@@ -122,7 +125,7 @@ export type RegistrationResponse = S.Schema.To<typeof RegistrationResponse>
 /* Authentication */
 
 export const AuthenticationRequest = S.struct({
-  userVerification: S.boolean,
+  userVerification: S.optional(UserVerification),
 })
 
 export const AuthenticationOptions = S.struct({
@@ -209,12 +212,8 @@ export const createParser = <From, To>(schema: S.Schema<From, To>) => {
     )
   }
 
-  const transformError = (error: ParseError) => {
-    return new PasslockError({
-      message: 'Unable to parse object',
-      code: ErrorCode.InternalServerError,
-      detail: formatError(error),
-    })
+  const transformError = (e: ParseError) => {
+    return error('Unable to parse object', ErrorCode.InternalServerError, formatError(e))
   }
 
   return (data: object, options?: ParseOptions) =>
