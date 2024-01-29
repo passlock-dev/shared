@@ -2,12 +2,24 @@ import { ParseOptions } from '@effect/schema/AST'
 import { ParseError } from '@effect/schema/ParseResult'
 import * as S from '@effect/schema/Schema'
 import { formatError } from '@effect/schema/TreeFormatter'
-import { Effect as E, pipe } from 'effect'
+import { Effect as E, Option, pipe } from 'effect'
 
 import { ErrorCode, error } from '../error/error'
 import { PasslockLogger } from '../logging/logging'
+import { Nullish } from '../utils/nullish'
 
 /* Components */
+
+/**
+ * Transform T | undefined | null => T | undefined
+ * TODO must be a better way?
+ * @param s 
+ * @returns 
+ */
+const nullish = <T>(s: S.Schema<never, T>) => pipe(
+  S.optionFromNullish(s, undefined),
+  S.transform(S.union(s, S.undefined), Option.getOrUndefined, Option.fromNullable)
+)
 
 const PublicKey = S.literal('public-key')
 
@@ -16,7 +28,10 @@ const PubKeyCredParams = S.struct({
   type: PublicKey,
 })
 
-const AuthenticatorAttachment = S.union(S.literal('cross-platform'), S.literal('platform'))
+const AuthenticatorAttachment = S.union(
+  S.literal('cross-platform'), 
+  S.literal('platform')
+)
 
 const base64url = S.string
 
@@ -44,23 +59,27 @@ const UserVerification = S.union(
 
 export type UserVerification = S.Schema.To<typeof UserVerification>
 
-const ResidentKey = S.union(S.literal('discouraged'), S.literal('preferred'), S.literal('required'))
+const ResidentKey = S.union(
+  S.literal('discouraged'), 
+  S.literal('preferred'), 
+  S.literal('required')
+)
 
 const AuthenticatorSelection = S.struct({
-  authenticatorAttachment: S.optional(AuthenticatorAttachment),
-  residentKey: S.optional(ResidentKey),
-  requireResidentKey: S.optional(S.boolean),
-  userVerification: S.optional(UserVerification),
+  authenticatorAttachment: nullish(AuthenticatorAttachment),
+  residentKey: nullish(ResidentKey),
+  requireResidentKey: nullish(S.boolean),
+  userVerification: nullish(UserVerification),
 })
 
 const ClientExtensionResults = S.struct({
-  appid: S.optional(S.boolean),
+  appid: nullish(S.boolean),
   credProps: S.optional(
     S.struct({
-      rk: S.optional(S.boolean),
+      rk: nullish(S.boolean),
     }),
   ),
-  hmacCreateSecret: S.optional(S.boolean),
+  hmacCreateSecret: nullish(S.boolean),
 })
 
 /* Registration */
@@ -69,7 +88,7 @@ export const RegistrationRequest = S.struct({
   email: S.string,
   firstName: S.string,
   lastName: S.string,
-  userVerification: S.optional(UserVerification),
+  userVerification: nullish(UserVerification),
 })
 
 /**
@@ -106,13 +125,13 @@ export const RegistrationCredential = S.struct({
   response: S.struct({
     clientDataJSON: S.string,
     attestationObject: S.string,
-    authenticatorData: S.optional(S.string),
-    transports: S.optional(S.mutable(S.array(Transport))),
-    publicKeyAlgorithm: S.optional(S.number),
-    publicKey: S.optional(S.string),
+    authenticatorData: nullish(S.string),
+    transports: nullish(S.mutable(S.array(Transport))),
+    publicKeyAlgorithm: nullish(S.number),
+    publicKey: nullish(S.string),
   }),
   clientExtensionResults: ClientExtensionResults,
-  authenticatorAttachment: S.optional(AuthenticatorAttachment),
+  authenticatorAttachment: nullish(AuthenticatorAttachment),
 })
 
 export const RegistrationResponse = S.struct({
@@ -125,7 +144,7 @@ export type RegistrationResponse = S.Schema.To<typeof RegistrationResponse>
 /* Authentication */
 
 export const AuthenticationRequest = S.struct({
-  userVerification: S.optional(UserVerification),
+  userVerification: nullish(UserVerification),
 })
 
 export const AuthenticationOptions = S.struct({
@@ -148,9 +167,9 @@ export const AuthenticationCredential = S.struct({
     clientDataJSON: S.string,
     authenticatorData: S.string,
     signature: S.string,
-    userHandle: S.optional(S.string),
+    userHandle: nullish(S.string),
   }),
-  authenticatorAttachment: S.optional(AuthenticatorAttachment),
+  authenticatorAttachment: nullish(AuthenticatorAttachment),
   clientExtensionResults: ClientExtensionResults,
 })
 
@@ -159,7 +178,7 @@ export const AuthenticationResponse = S.struct({
   credential: AuthenticationCredential,
 })
 
-export const parseAuthenticationOptions = S.parseEither
+export const parseAuthenticationOptions = S.decodeEither
 
 export const Principal = S.struct({
   token: S.string,
@@ -190,8 +209,8 @@ export type CheckRegistration = S.Schema.To<typeof CheckRegistration>
 
 /* Utils */
 
-export const createParser = <From, To>(schema: S.Schema<From, To>) => {
-  const parse = S.parse(schema)
+export const createParser = <From, To>(schema: S.Schema<never, From, Nullish<To>>) => {
+  const parse = S.decodeUnknown(schema)
 
   /**
    * The parser generates some nicely formatted errors but they don't
@@ -202,6 +221,8 @@ export const createParser = <From, To>(schema: S.Schema<From, To>) => {
    * @returns
    */
   const logError = (parseError: ParseError) => {
+    console.log(formatError(parseError))
+
     return PasslockLogger.pipe(
       E.flatMap(logger =>
         E.sync(() => {
@@ -217,5 +238,9 @@ export const createParser = <From, To>(schema: S.Schema<From, To>) => {
   }
 
   return (data: object, options?: ParseOptions) =>
-    pipe(parse(data, options), E.tapError(logError), E.mapError(transformError))
+    pipe(
+      parse(data, options), 
+      E.tapError(logError), 
+      E.mapError(transformError)
+    )
 }

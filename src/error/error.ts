@@ -6,7 +6,7 @@ export enum ErrorCode {
   DuplicateEmail = 'DuplicateEmail',
   DuplicatePasskey = 'DuplicatePasskey',
   PasskeyNotFound = 'PasskeyNotFound',
-  InvalidTenancy = 'InvalidTenancy',
+  InvalidTenancyID = 'InvalidTenancyID',
   InvalidClientID = 'InvalidClientID',
   InvalidApiKey = 'InvalidApiKey',
   UserNotFound = 'UserNotFound',
@@ -20,19 +20,17 @@ export enum ErrorCode {
 
 export class PasslockError extends Error {
   readonly _tag = 'PasslockError'
-  readonly message: string
   readonly code: ErrorCode
   readonly detail?: unknown
 
   constructor(
     readonly options: {
       readonly message: string
-      code: ErrorCode
-      detail?: unknown
+      readonly code: ErrorCode
+      readonly detail?: unknown
     },
   ) {
     super(options.message, { cause: options.detail })
-    this.message = options.message
     this.code = options.code
     this.detail = options.detail
   }
