@@ -1,11 +1,13 @@
-import * as v from 'valibot'; // 1.2 kB
-import { pipe, Effect as E } from "effect"
-import { ErrorCode, error } from '../error/error';
-import { PasslockLogger } from '../logging/logging';
+import { Effect as E, pipe } from 'effect'
+import * as v from 'valibot' // 1.2 kB
 
-const nullish = <TSchema extends v.BaseSchema>(schema: TSchema) => v.transform(v.nullish(schema), (a) => a ?? undefined)
+import { ErrorCode, error } from '../error/error'
+import { PasslockLogger } from '../logging/logging'
 
-const date = v.transform(v.string(), (date) => new Date(date))
+const nullish = <TSchema extends v.BaseSchema>(schema: TSchema) =>
+  v.transform(v.nullish(schema), v => v ?? undefined) // eslint-disable-line @typescript-eslint/no-unsafe-return
+
+const date = v.transform(v.string(), date => new Date(date))
 
 const PublicKey = v.literal('public-key')
 
@@ -14,10 +16,7 @@ const PubKeyCredParams = v.object({
   type: PublicKey,
 })
 
-const AuthenticatorAttachment = v.union([
-  v.literal('cross-platform'), 
-  v.literal('platform')
-])
+const AuthenticatorAttachment = v.union([v.literal('cross-platform'), v.literal('platform')])
 
 const base64url = v.string
 
@@ -46,9 +45,9 @@ const UserVerification = v.union([
 export type UserVerification = v.Output<typeof UserVerification>
 
 const ResidentKey = v.union([
-  v.literal('discouraged'), 
-  v.literal('preferred'), 
-  v.literal('required')
+  v.literal('discouraged'),
+  v.literal('preferred'),
+  v.literal('required'),
 ])
 
 const AuthenticatorSelection = v.object({
@@ -68,10 +67,7 @@ const ClientExtensionResults = v.object({
   hmacCreateSecret: nullish(v.boolean()),
 })
 
-const VerifyEmail = v.union([
-  v.literal('link'), 
-  v.literal('code')
-])
+const VerifyEmail = v.union([v.literal('link'), v.literal('code')])
 
 export type VerifyEmail = v.Output<typeof VerifyEmail>
 
@@ -134,7 +130,7 @@ export const RegistrationResponse = v.object({
   session: v.string(),
   credential: RegistrationCredential,
   verifyEmail: nullish(VerifyEmail),
-  redirectUrl: nullish(v.string([ v.url() ]))
+  redirectUrl: nullish(v.string([v.url()])),
 })
 
 export type RegistrationResponse = v.Output<typeof RegistrationResponse>
@@ -177,7 +173,7 @@ export const AuthenticationResponse = v.object({
 })
 
 export const Principal = v.object({
-  token:v.string(),
+  token: v.string(),
   subject: v.object({
     id: v.string(),
     firstName: v.string(),
@@ -186,12 +182,9 @@ export const Principal = v.object({
     emailVerified: v.boolean(),
   }),
   authStatement: v.object({
-    authType: v.union([ 
-      v.literal('email'), 
-      v.literal('passkey') 
-    ]),
+    authType: v.union([v.literal('email'), v.literal('passkey')]),
     userVerified: v.boolean(),
-    authTimestamp: date
+    authTimestamp: date,
   }),
   expiresAt: date,
 })
@@ -208,11 +201,15 @@ export type CheckRegistration = v.Output<typeof CheckRegistration>
 
 /* Utils */
 
-const log = (message: unknown) => E.flatMap(PasslockLogger, (logger) => logger.logRaw(message))
+const log = (message: unknown) => E.flatMap(PasslockLogger, logger => logger.logRaw(message))
 
-export const createParser = <TSchema extends v.BaseSchema>(schema: TSchema) => (input: unknown) => pipe(
-  v.safeParse(schema, input),
-  (result) => result.success ? E.succeed(result.output) : E.fail(v.flatten(result.issues)),
-  (effect) => E.tapError(effect, (issues) => log(issues)),
-  (effect) => E.mapError(effect, (issues) => error("Validation failure", ErrorCode.InvalidRequest, issues))
-)
+export const createParser =
+  <TSchema extends v.BaseSchema>(schema: TSchema) =>
+  (input: unknown) =>
+    pipe(
+      v.safeParse(schema, input),
+      result => (result.success ? E.succeed(result.output) : E.fail(v.flatten(result.issues))),
+      effect => E.tapError(effect, issues => log(issues)),
+      effect =>
+        E.mapError(effect, issues => error('Validation failure', ErrorCode.InvalidRequest, issues)),
+    )
