@@ -10,9 +10,7 @@ describe('log', () => {
 
   test('log DEBUG to the console', () => {
     const effect = debug('hello world')
-
     const withDebugLevel = effect.pipe(Logger.withMinimumLogLevel(EffectLogLevel.Debug))
-
     const logSpy = vi.spyOn(globalThis.console, 'log').mockImplementation(() => undefined)
 
     E.runSync(withDebugLevel)
@@ -23,7 +21,6 @@ describe('log', () => {
 
   test('log INFO to the console', () => {
     const effect = info('hello world')
-
     const logSpy = vi.spyOn(globalThis.console, 'log').mockImplementation(() => undefined)
 
     E.runSync(effect)
@@ -34,7 +31,6 @@ describe('log', () => {
 
   test('log WARN to the console', () => {
     const effect = warn('hello world')
-
     const logSpy = vi.spyOn(globalThis.console, 'log').mockImplementation(() => undefined)
 
     E.runSync(effect)
@@ -45,7 +41,6 @@ describe('log', () => {
 
   test('log ERROR to the console', () => {
     const effect = error('hello world')
-
     const logSpy = vi.spyOn(globalThis.console, 'log').mockImplementation(() => undefined)
 
     E.runSync(effect)

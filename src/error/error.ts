@@ -15,6 +15,8 @@ export enum ErrorCode {
   InternalServerError = 'InternalServerError',
   InternalBrowserError = 'InternalBrowserError',
   VerificationFailure = 'VerificationFailure',
+  Forbidden = 'Forbidden',
+  Unauthorized = 'Unauthorized',
   OtherError = 'OtherError',
 }
 
