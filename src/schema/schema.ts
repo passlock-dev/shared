@@ -1,93 +1,86 @@
-import { ParseOptions } from '@effect/schema/AST'
-import { ParseError } from '@effect/schema/ParseResult'
-import * as S from '@effect/schema/Schema'
-import { formatError } from '@effect/schema/TreeFormatter'
-import { Effect as E, Option, pipe } from 'effect'
+import * as v from 'valibot'; // 1.2 kB
+import { pipe, Effect as E } from "effect"
+import { ErrorCode, error } from '../error/error';
+import { PasslockLogger } from '../logging/logging';
 
-import { ErrorCode, error } from '../error/error'
-import { PasslockLogger } from '../logging/logging'
-import { Nullish } from '../utils/nullish'
+const nullish = <TSchema extends v.BaseSchema>(schema: TSchema) => v.transform(v.nullish(schema), (a) => a ?? undefined)
 
-/* Components */
+const date = v.transform(v.string(), (date) => new Date(date))
 
-/**
- * Transform T | undefined | null => T | undefined
- * TODO must be a better way?
- * @param s 
- * @returns 
- */
-const nullish = <T>(s: S.Schema<never, T>) => pipe(
-  S.optionFromNullish(s, undefined),
-  S.transform(S.union(s, S.undefined), Option.getOrUndefined, Option.fromNullable)
-)
+const PublicKey = v.literal('public-key')
 
-const PublicKey = S.literal('public-key')
-
-const PubKeyCredParams = S.struct({
-  alg: S.number,
+const PubKeyCredParams = v.object({
+  alg: v.number(),
   type: PublicKey,
 })
 
-const AuthenticatorAttachment = S.union(
-  S.literal('cross-platform'), 
-  S.literal('platform')
-)
+const AuthenticatorAttachment = v.union([
+  v.literal('cross-platform'), 
+  v.literal('platform')
+])
 
-const base64url = S.string
+const base64url = v.string
 
-const Transport = S.union(
-  S.literal('ble'),
-  S.literal('hybrid'),
-  S.literal('internal'),
-  S.literal('nfc'),
-  S.literal('usb'),
-  // S.literal('cable'), // Not yet supported by @github/webauthn-json
-  // S.literal('smart-card'), // Not yet supported by @github/webauthn-json
-)
+const Transport = v.union([
+  v.literal('ble'),
+  v.literal('hybrid'),
+  v.literal('internal'),
+  v.literal('nfc'),
+  v.literal('usb'),
+  // v.literal('cable'), // Not yet supported by @github/webauthn-json
+  // v.literal('smart-card'), // Not yet supported by @github/webauthn-json
+])
 
-const Credential = S.struct({
-  id: base64url,
+const Credential = v.object({
+  id: base64url(),
   type: PublicKey,
-  transports: S.mutable(S.array(Transport)),
+  transports: v.array(Transport),
 })
 
-const UserVerification = S.union(
-  S.literal('discouraged'),
-  S.literal('preferred'),
-  S.literal('required'),
-)
+const UserVerification = v.union([
+  v.literal('discouraged'),
+  v.literal('preferred'),
+  v.literal('required'),
+])
 
-export type UserVerification = S.Schema.To<typeof UserVerification>
+export type UserVerification = v.Output<typeof UserVerification>
 
-const ResidentKey = S.union(
-  S.literal('discouraged'), 
-  S.literal('preferred'), 
-  S.literal('required')
-)
+const ResidentKey = v.union([
+  v.literal('discouraged'), 
+  v.literal('preferred'), 
+  v.literal('required')
+])
 
-const AuthenticatorSelection = S.struct({
+const AuthenticatorSelection = v.object({
   authenticatorAttachment: nullish(AuthenticatorAttachment),
   residentKey: nullish(ResidentKey),
-  requireResidentKey: nullish(S.boolean),
+  requireResidentKey: nullish(v.boolean()),
   userVerification: nullish(UserVerification),
 })
 
-const ClientExtensionResults = S.struct({
-  appid: nullish(S.boolean),
-  credProps: S.optional(
-    S.struct({
-      rk: nullish(S.boolean),
+const ClientExtensionResults = v.object({
+  appid: nullish(v.boolean()),
+  credProps: nullish(
+    v.object({
+      rk: nullish(v.boolean()),
     }),
   ),
-  hmacCreateSecret: nullish(S.boolean),
+  hmacCreateSecret: nullish(v.boolean()),
 })
+
+const VerifyEmail = v.union([
+  v.literal('link'), 
+  v.literal('code')
+])
+
+export type VerifyEmail = v.Output<typeof VerifyEmail>
 
 /* Registration */
 
-export const RegistrationRequest = S.struct({
-  email: S.string,
-  firstName: S.string,
-  lastName: S.string,
+export const RegistrationRequest = v.object({
+  email: v.string(),
+  firstName: v.string(),
+  lastName: v.string(),
   userVerification: nullish(UserVerification),
 })
 
@@ -96,151 +89,130 @@ export const RegistrationRequest = S.struct({
  * along with a session token. The publicKey property represents a
  * PublicKeyCredentialCreationOptionsJSON
  */
-export const RegistrationOptions = S.struct({
-  session: S.string,
-  publicKey: S.struct({
-    rp: S.struct({
-      name: S.string,
-      id: base64url,
+export const RegistrationOptions = v.object({
+  session: v.string(),
+  publicKey: v.object({
+    rp: v.object({
+      name: v.string(),
+      id: base64url(),
     }),
-    user: S.struct({
-      id: base64url,
-      name: S.string,
-      displayName: S.string,
+    user: v.object({
+      id: base64url(),
+      name: v.string(),
+      displayName: v.string(),
     }),
-    challenge: base64url,
-    pubKeyCredParams: S.mutable(S.array(PubKeyCredParams)),
-    timeout: S.number,
-    excludeCredentials: S.mutable(S.array(Credential)),
+    challenge: base64url(),
+    pubKeyCredParams: v.array(PubKeyCredParams),
+    timeout: v.number(),
+    excludeCredentials: v.array(Credential),
     authenticatorSelection: AuthenticatorSelection,
   }),
 })
 
-export type RegistrationOptions = S.Schema.To<typeof RegistrationOptions>
+export type RegistrationOptions = v.Output<typeof RegistrationOptions>
 
-export const RegistrationCredential = S.struct({
-  id: S.string,
-  rawId: S.string,
+export const RegistrationCredential = v.object({
+  id: v.string(),
+  rawId: v.string(),
   type: PublicKey,
-  response: S.struct({
-    clientDataJSON: S.string,
-    attestationObject: S.string,
-    authenticatorData: nullish(S.string),
-    transports: nullish(S.mutable(S.array(Transport))),
-    publicKeyAlgorithm: nullish(S.number),
-    publicKey: nullish(S.string),
+  response: v.object({
+    clientDataJSON: v.string(),
+    attestationObject: v.string(),
+    authenticatorData: nullish(v.string()),
+    transports: nullish(v.array(Transport)),
+    publicKeyAlgorithm: nullish(v.number()),
+    publicKey: nullish(v.string()),
   }),
   clientExtensionResults: ClientExtensionResults,
   authenticatorAttachment: nullish(AuthenticatorAttachment),
 })
 
-export const RegistrationResponse = S.struct({
-  session: S.string,
+/**
+ * What the browser sends back to us
+ */
+export const RegistrationResponse = v.object({
+  session: v.string(),
   credential: RegistrationCredential,
+  verifyEmail: nullish(VerifyEmail),
+  redirectUrl: nullish(v.string([ v.url() ]))
 })
 
-export type RegistrationResponse = S.Schema.To<typeof RegistrationResponse>
+export type RegistrationResponse = v.Output<typeof RegistrationResponse>
 
 /* Authentication */
 
-export const AuthenticationRequest = S.struct({
+export const AuthenticationRequest = v.object({
   userVerification: nullish(UserVerification),
 })
 
-export const AuthenticationOptions = S.struct({
-  session: S.string,
-  publicKey: S.struct({
-    rpId: S.string,
-    challenge: S.string,
-    timeout: S.number,
+export const AuthenticationOptions = v.object({
+  session: v.string(),
+  publicKey: v.object({
+    rpId: v.string(),
+    challenge: v.string(),
+    timeout: v.number(),
     userVerification: UserVerification,
   }),
 })
 
-export type AuthenticationOptions = S.Schema.To<typeof AuthenticationOptions>
+export type AuthenticationOptions = v.Output<typeof AuthenticationOptions>
 
-export const AuthenticationCredential = S.struct({
-  id: S.string,
-  rawId: S.string,
+export const AuthenticationCredential = v.object({
+  id: v.string(),
+  rawId: v.string(),
   type: PublicKey,
-  response: S.struct({
-    clientDataJSON: S.string,
-    authenticatorData: S.string,
-    signature: S.string,
-    userHandle: nullish(S.string),
+  response: v.object({
+    clientDataJSON: v.string(),
+    authenticatorData: v.string(),
+    signature: v.string(),
+    userHandle: nullish(v.string()),
   }),
   authenticatorAttachment: nullish(AuthenticatorAttachment),
   clientExtensionResults: ClientExtensionResults,
 })
 
-export const AuthenticationResponse = S.struct({
-  session: S.string,
+export const AuthenticationResponse = v.object({
+  session: v.string(),
   credential: AuthenticationCredential,
 })
 
-export const parseAuthenticationOptions = S.decodeEither
-
-export const Principal = S.struct({
-  token: S.string,
-  subject: S.struct({
-    id: S.string,
-    firstName: S.string,
-    lastName: S.string,
-    email: S.string,
-    emailVerified: S.boolean,
+export const Principal = v.object({
+  token:v.string(),
+  subject: v.object({
+    id: v.string(),
+    firstName: v.string(),
+    lastName: v.string(),
+    email: v.string(),
+    emailVerified: v.boolean(),
   }),
-  authStatement: S.struct({
-    authType: S.union(S.literal('email'), S.literal('passkey')),
-    userVerified: S.boolean,
-    authTimestamp: S.Date,
+  authStatement: v.object({
+    authType: v.union([ 
+      v.literal('email'), 
+      v.literal('passkey') 
+    ]),
+    userVerified: v.boolean(),
+    authTimestamp: date
   }),
-  expiresAt: S.Date,
+  expiresAt: date,
 })
 
-export type Principal = S.Schema.To<typeof Principal>
+export type Principal = v.Output<typeof Principal>
 
 /* Check */
 
-export const CheckRegistration = S.struct({
-  registered: S.boolean,
+export const CheckRegistration = v.object({
+  registered: v.boolean(),
 })
 
-export type CheckRegistration = S.Schema.To<typeof CheckRegistration>
+export type CheckRegistration = v.Output<typeof CheckRegistration>
 
 /* Utils */
 
-export const createParser = <From, To>(schema: S.Schema<never, From, Nullish<To>>) => {
-  const parse = S.decodeUnknown(schema)
+const log = (message: unknown) => E.flatMap(PasslockLogger, (logger) => logger.logRaw(message))
 
-  /**
-   * The parser generates some nicely formatted errors but they don't
-   * play well with Effects logger so we log them inline using a raw
-   * (i.e. console) logger
-   *
-   * @param parseError
-   * @returns
-   */
-  const logError = (parseError: ParseError) => {
-    console.log(formatError(parseError))
-
-    return PasslockLogger.pipe(
-      E.flatMap(logger =>
-        E.sync(() => {
-          const formatted = formatError(parseError)
-          logger.logRaw(formatted)
-        }),
-      ),
-    )
-  }
-
-  const transformError = (e: ParseError) => {
-    return error('Unable to parse object', ErrorCode.InternalServerError, formatError(e))
-  }
-
-  return (data: object, options?: ParseOptions) =>
-    pipe(
-      parse(data, options), 
-      E.tapError(logError), 
-      E.mapError(transformError)
-    )
-}
+export const createParser = <TSchema extends v.BaseSchema>(schema: TSchema) => (input: unknown) => pipe(
+  v.safeParse(schema, input),
+  (result) => result.success ? E.succeed(result.output) : E.fail(v.flatten(result.issues)),
+  (effect) => E.tapError(effect, (issues) => log(issues)),
+  (effect) => E.mapError(effect, (issues) => error("Validation failure", ErrorCode.InvalidRequest, issues))
+)

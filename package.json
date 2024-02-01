@@ -2,7 +2,9 @@
   "name": "@passlock/shared",
   "version": "0.0.0",
   "description": "Shared code use by Passlock frontend libraries & backend SDKs",
-  "keywords": ["passlock"],
+  "keywords": [
+    "passlock"
+  ],
   "author": {
     "name": "Toby Hobson",
     "email": "toby@passlock.dev"
@@ -49,7 +51,8 @@
   },
   "dependencies": {
     "@effect/schema": "^0.61.3",
-    "effect": "2.2.2"
+    "effect": "2.2.2",
+    "valibot": "^0.27.1"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.2",

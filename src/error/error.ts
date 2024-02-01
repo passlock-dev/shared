@@ -34,6 +34,16 @@ export class PasslockError extends Error {
     this.code = options.code
     this.detail = options.detail
   }
+
+  toString() {
+    return this.detail ? 
+      `Message: ${this.message}, Code: ${this.code}, Detail: ${this.detail}` : 
+      `Message: ${this.message}, Code: ${this.code}`
+  }
+
+  toJSON() {
+    return { code: this.code, message: this.message, detail: this.detail }
+  }
 }
 
 export const isPasslockError = (cause: unknown): cause is PasslockError => {
