@@ -36,6 +36,37 @@ export class PasslockError extends Error {
     this.code = options.code
     this.detail = options.detail
   }
+
+  toJSON() {
+    let detail: unknown
+
+    try {
+      if (
+        this.detail && 
+        typeof this.detail === "object" &&
+        'toJSON' in this.detail &&
+        typeof this.detail.toJSON === 'function'
+      ) {
+        detail = this.detail.toJSON()
+      }
+    } catch { }
+
+    return detail ? 
+      { message: this.message, code: this.code, detail } : 
+      { message: this.message, code: this.code }
+  }
+
+  toString() {
+    let detail: string | undefined = undefined
+
+    try {
+      detail = this.detail?.toString()
+    } catch { }
+
+    return detail ? 
+      `${this.code}: ${this.message}, ${detail}` : 
+      `${this.code}: ${this.message}` 
+  }
 }
 
 export const isPasslockError = (cause: unknown): cause is PasslockError => {
