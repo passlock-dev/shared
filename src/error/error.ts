@@ -42,18 +42,20 @@ export class PasslockError extends Error {
 
     try {
       if (
-        this.detail && 
-        typeof this.detail === "object" &&
+        this.detail &&
+        typeof this.detail === 'object' &&
         'toJSON' in this.detail &&
         typeof this.detail.toJSON === 'function'
       ) {
         detail = this.detail.toJSON()
       }
-    } catch { }
+    } catch {
+      console.log("Unable to call toJSON on error detail, skipping")
+    }
 
-    return detail ? 
-      { message: this.message, code: this.code, detail } : 
-      { message: this.message, code: this.code }
+    return detail
+      ? { message: this.message, code: this.code, detail }
+      : { message: this.message, code: this.code }
   }
 
   toString() {
@@ -61,11 +63,11 @@ export class PasslockError extends Error {
 
     try {
       detail = this.detail?.toString()
-    } catch { }
+    } catch {
+      console.log("Unable to call toString on error detail, skipping")
+    }
 
-    return detail ? 
-      `${this.code}: ${this.message}, ${detail}` : 
-      `${this.code}: ${this.message}` 
+    return detail ? `${this.code}: ${this.message}, ${detail}` : `${this.code}: ${this.message}`
   }
 }
 
