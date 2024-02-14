@@ -96,7 +96,7 @@ export const fail = (
   message: string,
   code: ErrorCode,
   detail?: unknown,
-): Effect.Effect<never, PasslockError, never> => {
+): Effect.Effect<never, PasslockError> => {
   return Effect.fail(error(message, code, detail))
 }
 

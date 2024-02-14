@@ -17,17 +17,17 @@ export enum LogLevel {
  * browser we want to log and fire off custom events.
  */
 export type PasslockLogger = {
-  log<T>(message: T, logLevel: LogLevel): E.Effect<never, PasslockError, void>
-  debug<T>(message: T): E.Effect<never, PasslockError, void>
-  info<T>(message: T): E.Effect<never, PasslockError, void>
-  warn<T>(message: T): E.Effect<never, PasslockError, void>
-  error<T>(message: T): E.Effect<never, PasslockError, void>
-  logRaw<T>(message: T): E.Effect<never, never, void>
+  log<T>(message: T, logLevel: LogLevel): E.Effect<void, PasslockError>
+  debug<T>(message: T): E.Effect<void, PasslockError>
+  info<T>(message: T): E.Effect<void, PasslockError>
+  warn<T>(message: T): E.Effect<void, PasslockError>
+  error<T>(message: T): E.Effect<void, PasslockError>
+  logRaw<T>(message: T): E.Effect<void>
 }
 
-export const PasslockLogger = Context.Tag<PasslockLogger>()
+export const PasslockLogger = Context.GenericTag<PasslockLogger>("@services/PasslockLogger")
 
-export const log = <T>(message: T, logLevel: LogLevel): E.Effect<never, PasslockError, void> => {
+export const log = <T>(message: T, logLevel: LogLevel): E.Effect<void, PasslockError> => {
   return E.gen(function* (_) {
     switch (logLevel) {
       case LogLevel.ERROR:
