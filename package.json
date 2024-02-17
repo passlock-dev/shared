@@ -1,6 +1,6 @@
 {
   "name": "@passlock/shared",
-  "version": "0.0.0",
+  "version": "0.8.3",
   "description": "Shared code use by Passlock frontend libraries & backend SDKs",
   "keywords": [
     "passlock"
@@ -45,7 +45,6 @@
     "lint": "eslint --ext .ts src",
     "lint:fix": "pnpm run lint --fix",
     "format": "prettier --write \"src/**/*.+(js|ts|json)\"",
-    "publish": "pnpm publish --no-git-checks --access public",
     "ncu": "ncu",
     "ncu:save": "ncu -u"
   },
