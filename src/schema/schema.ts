@@ -1,253 +1,195 @@
+import * as S from '@effect/schema/Schema'
+import { formatError } from '@effect/schema/TreeFormatter'
 import { Effect as E, pipe } from 'effect'
-import * as v from 'valibot' // 1.2 kB
 
-import { ErrorCode, error } from '../error/error'
-import { PasslockLogger } from '../logging/logging'
+const optional = <A>(s: S.Schema<A>) => S.optional(s, { exact: true })
 
-const nullish = <TSchema extends v.BaseSchema>(schema: TSchema) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  return v.transform(v.nullish(schema), v => v ?? undefined)
-}
-
-const date = v.transform(v.string(), date => new Date(date))
+export class ParsingError extends S.TaggedError<ParsingError>()('ParsingError', {
+  message: S.string,
+  detail: S.string,
+}) {}
 
 /* Components */
 
-const PublicKey = v.literal('public-key')
+export const VerifyEmail = S.union(S.literal('link'), S.literal('code'))
 
-const PubKeyCredParams = v.object({
-  alg: v.number(),
+export type VerifyEmail = S.Schema.To<typeof VerifyEmail>
+
+const PublicKey = S.literal('public-key')
+
+const PubKeyCredParams = S.struct({
+  alg: S.number,
   type: PublicKey,
 })
 
-const AuthenticatorAttachment = v.union([v.literal('cross-platform'), v.literal('platform')])
+const AuthenticatorAttachment = S.union(S.literal('cross-platform'), S.literal('platform'))
 
-const base64url = v.string
+const base64url = S.string
 
-const Transport = v.union([
-  v.literal('ble'),
-  v.literal('hybrid'),
-  v.literal('internal'),
-  v.literal('nfc'),
-  v.literal('usb'),
-  // v.literal('cable'), // Not yet supported by @github/webauthn-json
-  // v.literal('smart-card'), // Not yet supported by @github/webauthn-json
-])
+export const Transport = S.union(
+  S.literal('ble'),
+  S.literal('hybrid'),
+  S.literal('internal'),
+  S.literal('nfc'),
+  S.literal('usb'),
+)
 
-const Credential = v.object({
-  id: base64url(),
+const Credential = S.struct({
+  id: base64url,
   type: PublicKey,
-  transports: v.array(Transport),
+  transports: optional(S.mutable(S.array(Transport))),
 })
 
-const UserVerification = v.union([
-  v.literal('discouraged'),
-  v.literal('preferred'),
-  v.literal('required'),
-])
+export const UserVerification = S.union(
+  S.literal('discouraged'),
+  S.literal('preferred'),
+  S.literal('required'),
+)
 
-export type UserVerification = v.Output<typeof UserVerification>
+export type UserVerification = S.Schema.To<typeof UserVerification>
 
-const ResidentKey = v.union([
-  v.literal('discouraged'),
-  v.literal('preferred'),
-  v.literal('required'),
-])
+const ResidentKey = S.union(S.literal('discouraged'), S.literal('preferred'), S.literal('required'))
 
-const AuthenticatorSelection = v.object({
-  authenticatorAttachment: nullish(AuthenticatorAttachment),
-  residentKey: nullish(ResidentKey),
-  requireResidentKey: nullish(v.boolean()),
-  userVerification: nullish(UserVerification),
+const AuthenticatorSelection = S.struct({
+  authenticatorAttachment: optional(AuthenticatorAttachment),
+  requireResidentKey: optional(S.boolean),
+  residentKey: optional(ResidentKey),
+  userVerification: optional(UserVerification),
 })
 
-const ClientExtensionResults = v.object({
-  appid: nullish(v.boolean()),
-  credProps: nullish(
-    v.object({
-      rk: nullish(v.boolean()),
-    }),
-  ),
-  hmacCreateSecret: nullish(v.boolean()),
-})
-
-const VerifyEmail = v.union([v.literal('link'), v.literal('code')])
-
-const AuthType = v.union([v.literal('email'), v.literal('passkey')])
-
-export type VerifyEmail = v.Output<typeof VerifyEmail>
+const AuthType = S.union(S.literal('email'), S.literal('passkey'))
 
 /* Registration */
 
 /**
- * Sent from the client to the backend to request the options
+ * Required by the browser to generate a passkey.
+ * Wrap this into a publicKey and pass into createRequestFromJSON
+ * i.e. createRequestFromJSON({ publicKey: RegistrationOptions })
  */
-export const RegistrationRequest = v.object({
-  email: v.string(),
-  firstName: v.string(),
-  lastName: v.string(),
-  userVerification: nullish(UserVerification),
-  verifyEmail: nullish(VerifyEmail),
-  redirectUrl: nullish(v.string([v.url()])),
-})
-
-export type RegistrationRequest = v.Output<typeof RegistrationRequest>
-
-/**
- * The options needed by the browser to create a new credential,
- * along with a session token. The publicKey property represents a
- * PublicKeyCredentialCreationOptionsJSON
- */
-export const RegistrationOptions = v.object({
-  session: v.string(),
-  publicKey: v.object({
-    rp: v.object({
-      name: v.string(),
-      id: base64url(),
-    }),
-    user: v.object({
-      id: base64url(),
-      name: v.string(),
-      displayName: v.string(),
-    }),
-    challenge: base64url(),
-    pubKeyCredParams: v.array(PubKeyCredParams),
-    timeout: v.number(),
-    excludeCredentials: v.array(Credential),
-    authenticatorSelection: AuthenticatorSelection,
+export const RegistrationOptions = S.struct({
+  rp: S.struct({
+    name: S.string,
+    id: optional(base64url),
   }),
+  user: S.struct({
+    id: base64url,
+    name: S.string,
+    displayName: S.string,
+  }),
+  challenge: base64url,
+  pubKeyCredParams: S.mutable(S.array(PubKeyCredParams)),
+  timeout: optional(S.number),
+  excludeCredentials: optional(S.mutable(S.array(Credential))),
+  authenticatorSelection: optional(AuthenticatorSelection),
+  attestation: optional(
+    S.union(S.literal('direct'), S.literal('enterprise'), S.literal('indirect'), S.literal('none')),
+  ),
+  extensions: optional(
+    S.struct({
+      appid: optional(S.string),
+      appidExclude: optional(S.string),
+      credProps: optional(S.boolean),
+    }),
+  ),
 })
 
-export type RegistrationOptions = v.Output<typeof RegistrationOptions>
+export type RegistrationOptions = S.Schema.To<typeof RegistrationOptions>
 
-/**
- * Public key credential (generated by the browser)
- */
-export const RegistrationCredential = v.object({
-  id: v.string(),
-  rawId: v.string(),
+/** Public key credential (generated by the browser) */
+export const RegistrationCredential = S.struct({
+  id: S.string,
   type: PublicKey,
-  response: v.object({
-    clientDataJSON: v.string(),
-    attestationObject: v.string(),
-    authenticatorData: nullish(v.string()),
-    transports: nullish(v.array(Transport)),
-    publicKeyAlgorithm: nullish(v.number()),
-    publicKey: nullish(v.string()),
+  rawId: S.string,
+  authenticatorAttachment: S.optional(S.nullable(AuthenticatorAttachment)),
+  response: S.struct({
+    clientDataJSON: S.string,
+    attestationObject: S.string,
+    transports: S.mutable(S.array(Transport)),
   }),
-  clientExtensionResults: ClientExtensionResults,
-  authenticatorAttachment: nullish(AuthenticatorAttachment),
+  clientExtensionResults: S.struct({
+    appid: S.optional(S.boolean),
+    appidExclude: S.optional(S.boolean),
+    credProps: S.optional(S.struct({ rk: S.boolean })),
+  }),
 })
 
-/**
- * What the client sends back to us after creating a passkey
- */
-export const RegistrationResponse = v.object({
-  session: v.string(),
-  credential: RegistrationCredential,
-  verifyEmail: nullish(VerifyEmail),
-  redirectUrl: nullish(v.string([v.url()])),
-})
-
-export type RegistrationResponse = v.Output<typeof RegistrationResponse>
+export type RegistrationCredential = S.Schema.To<typeof RegistrationCredential>
 
 /* Authentication */
 
-/** Send from the client to the browser to request auth options */
-export const AuthenticationRequest = v.object({
-  userVerification: nullish(UserVerification),
+export const AuthenticationOptions = S.struct({
+  challenge: S.string,
+  timeout: optional(S.number),
+  rpId: optional(S.string),
+  allowCredentials: optional(S.mutable(S.array(Credential))),
+  userVerification: optional(UserVerification),
+  extensions: optional(
+    S.struct({
+      appid: optional(S.string),
+      credProps: optional(S.boolean),
+      hmacCreateSecret: optional(S.boolean)
+    }),
+  ),
 })
 
-/** Backend response to the AuthenticationRequest */
-export const AuthenticationOptions = v.object({
-  session: v.string(),
-  publicKey: v.object({
-    rpId: v.string(),
-    challenge: v.string(),
-    timeout: v.number(),
-    userVerification: UserVerification,
-  }),
-})
-
-export type AuthenticationOptions = v.Output<typeof AuthenticationOptions>
+export type AuthenticationOptions = S.Schema.To<typeof AuthenticationOptions>
 
 /** Browser's response to the backend's auth challenge  */
-export const AuthenticationCredential = v.object({
-  id: v.string(),
-  rawId: v.string(),
+export const AuthenticationCredential = S.struct({
+  id: S.string,
   type: PublicKey,
-  response: v.object({
-    clientDataJSON: v.string(),
-    authenticatorData: v.string(),
-    signature: v.string(),
-    userHandle: nullish(v.string()),
+  rawId: S.string,
+  authenticatorAttachment: S.optional(S.nullable(S.string)),
+  response: S.struct({
+    clientDataJSON: S.string,
+    authenticatorData: S.string,
+    signature: S.string,
+    userHandle: S.nullable(S.string),
   }),
-  authenticatorAttachment: nullish(AuthenticatorAttachment),
-  clientExtensionResults: ClientExtensionResults,
+  clientExtensionResults: S.struct({
+    appid: S.optional(S.boolean),
+    appidExclude: S.optional(S.boolean),
+    credProps: S.optional(
+      S.struct({
+        rk: S.boolean,
+      }),
+    ),
+  }),
 })
 
-/** Clients response to the backend's auth challenge  */
-export const AuthenticationResponse = v.object({
-  session: v.string(),
-  credential: AuthenticationCredential,
-})
+export type AuthenticationCredential = S.Schema.To<typeof AuthenticationCredential>
 
 /** Represents a successful registration/authentication */
-export const Principal = v.object({
-  token: v.string(),
-  subject: v.object({
-    id: v.string(),
-    firstName: v.string(),
-    lastName: v.string(),
-    email: v.string(),
-    emailVerified: v.boolean(),
+export const Principal = S.struct({
+  token: S.string,
+  subject: S.struct({
+    id: S.string,
+    firstName: S.string,
+    lastName: S.string,
+    email: S.string,
+    emailVerified: S.boolean,
   }),
-  authStatement: v.object({
+  authStatement: S.struct({
     authType: AuthType,
-    userVerified: v.boolean(),
-    authTimestamp: date,
+    userVerified: S.boolean,
+    authTimestamp: S.Date,
   }),
-  expiresAt: date,
+  expireAt: S.Date,
 })
 
-export type Principal = v.Output<typeof Principal>
+export type Principal = S.Schema.To<typeof Principal>
 
-/* isRegistered check */
-
-export const CheckRegistration = v.object({
-  registered: v.boolean(),
-})
-
-export type CheckRegistration = v.Output<typeof CheckRegistration>
-
-/* Verify email */
-
-export const VerifyEmailRequest = v.object({
-  code: v.string(),
-  token: v.string(),
-})
-
-export const VerifyEmailResponse = v.object({
-  verified: v.boolean(),
-})
-
-export const AuthenticationRequired = v.object({
+export const AuthenticationRequired = S.struct({
   requiredAuthType: AuthType,
 })
 
-export type VerifyEmailResponse = v.Output<typeof VerifyEmailResponse>
-
 /* Utils */
 
-const log = (message: unknown) => E.flatMap(PasslockLogger, logger => logger.logRaw(message))
-
 export const createParser =
-  <TSchema extends v.BaseSchema>(schema: TSchema) =>
+  <A, E, R>(schema: S.Schema<A, E, R>) =>
   (input: unknown) =>
     pipe(
-      v.safeParse(schema, input),
-      result => (result.success ? E.succeed(result.output) : E.fail(v.flatten(result.issues))),
-      effect => E.tapError(effect, issues => log(issues)),
-      effect =>
-        E.mapError(effect, issues => error('Validation failure', ErrorCode.InvalidRequest, issues)),
+      S.decodeUnknown(schema)(input),
+      E.mapError(formatError),
+      E.mapError(detail => new ParsingError({ message: 'Unable to parse input', detail })),
     )

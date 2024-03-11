@@ -1,105 +1,89 @@
-import { Effect } from 'effect'
+import * as S from '@effect/schema/Schema'
+import { Data } from 'effect'
 
-export enum ErrorCode {
-  OperationAborted = 'OperationAborted',
-  PasskeysNotSupported = 'PasskeysNotSupported',
-  DuplicateEmail = 'DuplicateEmail',
-  DuplicatePasskey = 'DuplicatePasskey',
-  PasskeyNotFound = 'PasskeyNotFound',
-  InvalidTenancyID = 'InvalidTenancyID',
-  InvalidClientID = 'InvalidClientID',
-  InvalidApiKey = 'InvalidApiKey',
-  UserNotFound = 'UserNotFound',
-  UserDisabled = 'UserDisabled',
-  InvalidRequest = 'InvalidRequest',
-  InternalServerError = 'InternalServerError',
-  InternalBrowserError = 'InternalBrowserError',
-  VerificationFailure = 'VerificationFailure',
-  Forbidden = 'Forbidden',
-  Unauthorized = 'Unauthorized',
-  OtherError = 'OtherError',
-}
+export const ErrorCode = {
+  NotSupported: 'NotSupported',
+  BadRequest: 'BadRequest',
+  Duplicate: 'Duplicate',
+  Forbidden: 'Forbidden',
+  InternalBrowserError: 'InternalBrowserError',
+  InternalServerError: 'InternalServerError',
+  NetworkError: 'NetworkError',
+  NotFound: 'NotFound',
+  Disabled: 'Disabled',
+  Unauthorized: 'Unauthorized',
+} as const
 
-export class PasslockError extends Error {
-  readonly _tag = 'PasslockError'
-  readonly code: ErrorCode
-  readonly detail?: unknown
+export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode]
 
-  constructor(
-    readonly options: {
-      readonly message: string
-      readonly code: ErrorCode
-      readonly detail?: unknown
-    },
-  ) {
-    super(options.message, { cause: options.detail })
-    this.code = options.code
-    this.detail = options.detail
-  }
-
-  toJSON() {
-    let detail: unknown
-
-    try {
-      if (
-        this.detail &&
-        typeof this.detail === 'object' &&
-        'toJSON' in this.detail &&
-        typeof this.detail.toJSON === 'function'
-      ) {
-        detail = this.detail.toJSON()
-      }
-    } catch {
-      console.log("Unable to call toJSON on error detail, skipping")
-    }
-
-    return detail
-      ? { message: this.message, code: this.code, detail }
-      : { message: this.message, code: this.code }
-  }
-
-  toString() {
-    let detail: string | undefined = undefined
-
-    try {
-      detail = this.detail?.toString()
-    } catch {
-      console.log("Unable to call toString on error detail, skipping")
-    }
-
-    return detail ? `${this.code}: ${this.message}, ${detail}` : `${this.code}: ${this.message}`
-  }
-}
-
-export const isPasslockError = (cause: unknown): cause is PasslockError => {
-  if (typeof cause !== 'object') return false
-  if (cause === null) return false
-
-  if (!('message' in cause)) return false
-  if (typeof cause.message !== 'string') return false
-
-  if (!('code' in cause)) return false
-  if (typeof cause.code !== 'string') return false
-
-  return true
-}
+/* Client errors */
 
 /**
- * Generate a Left(PasslockError)
- *
- * @param message
- * @param code
- * @param detail
- * @returns
+ * Browser doesn't support passkeys, autofill etc
  */
-export const fail = (
-  message: string,
-  code: ErrorCode,
-  detail?: unknown,
-): Effect.Effect<never, PasslockError> => {
-  return Effect.fail(error(message, code, detail))
-}
+export class NotSupported extends Data.TaggedError(ErrorCode.NotSupported)<{
+  message: string
+}> {}
 
-export const error = (message: string, code: ErrorCode, detail?: unknown): PasslockError => {
-  return new PasslockError({ message, code, detail })
-}
+export class InternalBrowserError extends S.TaggedError<InternalBrowserError>()(
+  ErrorCode.InternalBrowserError,
+  {
+    message: S.string,
+    detail: S.optional(S.string),
+  },
+) {}
+
+/* 400 style errors */
+
+export class BadRequest extends S.TaggedError<BadRequest>()(ErrorCode.BadRequest, {
+  message: S.string,
+  detail: S.optional(S.string),
+}) {}
+
+/**
+ * Email already in use, Passkey already registered etc
+ */
+export class Duplicate extends S.TaggedError<Duplicate>()(ErrorCode.Duplicate, {
+  message: S.string,
+  detail: S.optional(S.string),
+}) {}
+
+export class NotFound extends S.TaggedError<NotFound>()(ErrorCode.NotFound, {
+  message: S.string,
+  detail: S.optional(S.string),
+}) {}
+
+/**
+ * User/API key is disabled
+ */
+export class Disabled extends S.TaggedError<Disabled>()(ErrorCode.Disabled, {
+  message: S.string,
+  detail: S.optional(S.string),
+}) {}
+
+/* Permissions */
+
+export class Unauthorized extends S.TaggedError<Unauthorized>()(ErrorCode.Unauthorized, {
+  message: S.string,
+  detail: S.optional(S.string),
+}) {}
+
+export class Forbidden extends S.TaggedError<Forbidden>()(ErrorCode.Forbidden, {
+  message: S.string,
+  detail: S.optional(S.string),
+}) {}
+
+/* Other errors */
+
+export class NetworkError extends S.TaggedError<NetworkError>()(ErrorCode.NetworkError, {
+  message: S.string,
+  detail: S.optional(S.string),
+}) {}
+
+export class InternalServerError extends S.TaggedError<InternalServerError>()(
+  ErrorCode.InternalServerError,
+  {
+    message: S.string,
+    detail: S.optional(S.string),
+  },
+) {}
