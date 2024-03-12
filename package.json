@@ -1,6 +1,6 @@
 {
   "name": "@passlock/shared",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Shared code use by Passlock frontend libraries & backend SDKs",
   "keywords": [
     "passlock"
@@ -33,8 +33,7 @@
   },
   "dependencies": {
     "@effect/rpc": "^0.27.20",
-    "@effect/schema": "^0.63.4",
-    "valibot": "^0.30.0"
+    "@effect/schema": "^0.63.4"
   },
   "peerDependencies": {
     "effect": "2.4.3"
