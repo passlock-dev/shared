@@ -13,8 +13,13 @@ const makeHandler = <Req extends Schema.TaggedRequest.Any>(rpc: Rpc.Rpc<Req, nev
     return Router.toHandlerEffect(router)
   })
 
-export const testNetworkService = <Req extends Schema.TaggedRequest.Any>(rpc: Rpc.Rpc<Req, never>) => ({
-  get: () => E.succeed({ /* empty object */ }),
+export const testNetworkService = <Req extends Schema.TaggedRequest.Any>(
+  rpc: Rpc.Rpc<Req, never>,
+) => ({
+  get: () =>
+    E.succeed({
+      /* empty object */
+    }),
   post: (_: string, body: string) =>
     pipe(
       makeHandler(rpc),
@@ -107,8 +112,8 @@ describe('RPC client', () => {
     await E.runPromise(effect)
   })
 
-  describe('when the endpoint fails', () =>
-    { test('should die with a NetworkError', async () => {
+  describe('when the endpoint fails', () => {
+    test('should die with a NetworkError', async () => {
       const assertions = E.gen(function* (_) {
         const rpcClient = yield* _(RpcClient)
         const sentRequest = new IsExistingUserReq({ email: 'toby' })
@@ -136,5 +141,6 @@ describe('RPC client', () => {
       )
 
       await E.runPromise(effect)
-    }); })
+    })
+  })
 })

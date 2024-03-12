@@ -188,12 +188,12 @@ export const NetworkServiceLive = Layer.effect(
   }),
 )
 
-export const makeClient = (context: Context.Context<NetworkService>) => E.sync(() =>
-  pipe(
-    RequestResolver.provideContext(networkResolver, context),
-    resolver => Resolver.toClient(resolver)
-  )  
-)
+export const makeClient = (context: Context.Context<NetworkService>) =>
+  E.sync(() =>
+    pipe(RequestResolver.provideContext(networkResolver, context), resolver =>
+      Resolver.toClient(resolver),
+    ),
+  )
 
 export type RouterOps = PreConnectOps & UserOps & RegistrationOps & AuthenticationOpts
 

@@ -1,6 +1,6 @@
 {
   "name": "@passlock/shared",
-  "version": "0.8.3",
+  "version": "0.9.0",
   "description": "Shared code use by Passlock frontend libraries & backend SDKs",
   "keywords": [
     "passlock"

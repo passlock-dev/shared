@@ -127,7 +127,7 @@ export const AuthenticationOptions = S.struct({
     S.struct({
       appid: optional(S.string),
       credProps: optional(S.boolean),
-      hmacCreateSecret: optional(S.boolean)
+      hmacCreateSecret: optional(S.boolean),
     }),
   ),
 })
