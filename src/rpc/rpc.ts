@@ -23,7 +23,8 @@ export class RpcConfig extends Context.Tag('RpcConfig')<
 export class NetworkService extends Context.Tag('NetworkService')<
   NetworkService,
   {
-    post: (body: string) => E.Effect<object, NetworkError>
+    get: (path: string) => E.Effect<object, NetworkError>
+    post: (path: string, body: string) => E.Effect<object, NetworkError>
   }
 >() {}
 
@@ -58,7 +59,7 @@ export const networkResolver = Resolver.makeEffect(u => {
       }),
     )
 
-    return yield* _(networkService.post(requestBody))
+    return yield* _(networkService.post('/rpc', requestBody))
   })
 })<typeof router>()
 
@@ -70,7 +71,7 @@ export const NetworkServiceLive = Layer.effect(
     const { tenancyId, clientId, endpoint: maybeEndpoint } = yield* _(RpcConfig)
 
     return {
-      post: (body: string) => {
+      get: (_path: string) => {
         const effect = E.gen(function* (_) {
           const endpoint = maybeEndpoint || 'https://api.passlock.dev'
 
@@ -80,7 +81,66 @@ export const NetworkServiceLive = Layer.effect(
             'X-CLIENT-ID': clientId,
           }
 
-          const url = `${endpoint}/${tenancyId}/rpc`
+          // drop leading /
+          const path = _path.replace(/^\//, '')
+          const url = `${endpoint}/${tenancyId}/${path}`
+
+          const res = yield* _(
+            E.tryPromise({
+              try: () => fetch(url, { method: 'GET', headers }),
+              catch: e =>
+                new NetworkError({ message: 'Unable to fetch from ' + url, detail: String(e) }),
+            }),
+          )
+
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          const json = yield* _(
+            E.tryPromise({
+              try: () => res.json() as Promise<unknown>,
+              catch: e =>
+                new NetworkError({
+                  message: 'Unable to extract json response from ' + url,
+                  detail: String(e),
+                }),
+            }),
+          )
+
+          if (res.status >= 500)
+            yield* _(
+              new NetworkError({
+                message: 'Received 500 response code from ' + url,
+              }),
+            )
+
+          const jsonObject = yield* _(
+            typeof json === 'object' && json !== null
+              ? E.succeed(json)
+              : E.fail(
+                  new NetworkError({
+                    message: `Expected JSON object to be returned from RPC endpoint, actual ${typeof json}`,
+                  }),
+                ),
+          )
+
+          return jsonObject
+        })
+
+        return E.retry(effect, { schedule })
+      },
+
+      post: (_path: string, body: string) => {
+        const effect = E.gen(function* (_) {
+          const endpoint = maybeEndpoint || 'https://api.passlock.dev'
+
+          const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CLIENT-ID': clientId,
+          }
+
+          // drop leading /
+          const path = _path.replace(/^\//, '')
+          const url = `${endpoint}/${tenancyId}/${path}`
 
           const res = yield* _(
             E.tryPromise({

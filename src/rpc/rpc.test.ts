@@ -13,8 +13,9 @@ const makeHandler = <Req extends Schema.TaggedRequest.Any>(rpc: Rpc.Rpc<Req, nev
     return Router.toHandlerEffect(router)
   })
 
-export const testDispatcher = <Req extends Schema.TaggedRequest.Any>(rpc: Rpc.Rpc<Req, never>) => ({
-  post: (body: string) =>
+export const testNetworkService = <Req extends Schema.TaggedRequest.Any>(rpc: Rpc.Rpc<Req, never>) => ({
+  get: () => E.succeed({ /* empty object */ }),
+  post: (_: string, body: string) =>
     pipe(
       makeHandler(rpc),
       E.zip(E.succeed(JSON.parse(body))),
@@ -55,16 +56,16 @@ describe('RPC client', () => {
 
     const rpc = Rpc.effect(IsExistingUserReq, respond)
 
-    const dispatcher = Layer.effect(
+    const networkServiceTest = Layer.effect(
       NetworkService,
       pipe(
         State,
         E.map(state => Rpc.provideService(rpc, State, state)),
-        E.map(rpc => testDispatcher(rpc)),
+        E.map(rpc => testNetworkService(rpc)),
       ),
     )
 
-    const liveClient = pipe(RpcClientLive, Layer.provide(dispatcher))
+    const liveClient = pipe(RpcClientLive, Layer.provide(networkServiceTest))
 
     const initState = {
       req: O.none<IsExistingUserReq>(),
@@ -94,8 +95,8 @@ describe('RPC client', () => {
 
     const respond = () => E.fail(badRequest)
     const rpc = Rpc.effect(IsExistingUserReq, respond)
-    const dispatcher = Layer.succeed(NetworkService, testDispatcher(rpc))
-    const liveClient = pipe(RpcClientLive, Layer.provide(dispatcher))
+    const networkService = Layer.succeed(NetworkService, testNetworkService(rpc))
+    const liveClient = pipe(RpcClientLive, Layer.provide(networkService))
 
     const effect = pipe(
       assertions,
@@ -120,12 +121,13 @@ describe('RPC client', () => {
         assert.instanceOf(defect, NetworkError)
       })
 
-      const testDispatcher = {
+      const testNetworkService = {
+        get: () => E.fail(new NetworkError({ message: 'BOOM!' })),
         post: () => E.fail(new NetworkError({ message: 'BOOM!' })),
       }
 
-      const dispatcher = Layer.succeed(NetworkService, testDispatcher)
-      const liveClient = pipe(RpcClientLive, Layer.provide(dispatcher))
+      const networkService = Layer.succeed(NetworkService, testNetworkService)
+      const liveClient = pipe(RpcClientLive, Layer.provide(networkService))
 
       const effect = pipe(
         assertions,
