@@ -20,8 +20,8 @@ export class RpcConfig extends Context.Tag('RpcConfig')<
 >() {}
 
 /** To send the JSON to the backend */
-export class NetworkService extends Context.Tag('NetworkService')<
-  NetworkService,
+export class Dispatcher extends Context.Tag('Dispatcher')<
+  Dispatcher,
   {
     get: (path: string) => E.Effect<object, NetworkError>
     post: (path: string, body: string) => E.Effect<object, NetworkError>
@@ -38,19 +38,24 @@ export class RetrySchedule extends Context.Tag('RetrySchedule')<
 /** Aggregates all the routes and requires all handlers */
 const router = Router.make(PreConnectRouter, UserRouter, RegistrationRouter, AuthenticationRouter)
 
-/** API gateway plugs into this.
- * Indirectly, it requires the handlers */
-export const rpcHandler = (message: object) =>
+/** 
+ * Express or API gateway lambdas plugs into this. Usage:
+ * 
+ * 1. Endpoint parses incoming request into a json object
+ * 2. Call this handler, passing the object
+ * 3. Serialize the response and send it over the wire
+ */
+export const RpcHandler = (message: object) =>
   pipe(
     Router.toHandlerEffect(router),
     handler => handler(message),
     E.mapError(e => new BadRequest({ message: 'Unable to parse request', detail: String(e) })),
   )
 
-/** Fires off requests using a NetworkService */
-export const networkResolver = Resolver.makeEffect(u => {
+/** Fires off requests using a Dispatcher */
+export const dispatchResolver = Resolver.makeEffect(u => {
   return E.gen(function* (_) {
-    const networkService = yield* _(NetworkService)
+    const dispatcher = yield* _(Dispatcher)
 
     const requestBody = yield* _(
       E.try({
@@ -59,31 +64,62 @@ export const networkResolver = Resolver.makeEffect(u => {
       }),
     )
 
-    return yield* _(networkService.post('/rpc', requestBody))
+    return yield* _(dispatcher.post('/rpc', requestBody))
   })
 })<typeof router>()
 
 /** Fires off client requests using fetch */
-export const NetworkServiceLive = Layer.effect(
-  NetworkService,
+export const DispatcherLive = Layer.effect(
+  Dispatcher,
   E.gen(function* (_) {
     const { schedule } = yield* _(RetrySchedule)
     const { tenancyId, clientId, endpoint: maybeEndpoint } = yield* _(RpcConfig)
 
-    return {
-      get: (_path: string) => {
-        const effect = E.gen(function* (_) {
-          const endpoint = maybeEndpoint || 'https://api.passlock.dev'
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const parseJson = (res: Response, url: string) => E.tryPromise({
+      try: () => res.json() as Promise<unknown>,
+      catch: e => new NetworkError({
+        message: 'Unable to extract json response from ' + url,
+        detail: String(e),
+      }),
+    })
 
+    // 400 errors are reflected in the RPC response error channel
+    // so in network terms they're still "ok"
+    const assertNo500s = (res: Response, url: string) => {
+      if (res.status >= 500) {
+        return E.fail(new NetworkError({
+          message: 'Received 500 response code from ' + url,
+        })) 
+      } else return E.unit
+    }
+
+    const parseJsonObject = (json: unknown) => {
+      return typeof json === 'object' && json !== null
+        ? E.succeed(json)
+        : E.fail(
+          new NetworkError({
+            message: `Expected JSON object to be returned from RPC endpoint, actual ${typeof json}`,
+          })
+        )
+    }
+
+    const buildUrl = (_path: string) => {
+      const endpoint = maybeEndpoint || 'https://api.passlock.dev'
+      // drop leading /
+      const path = _path.replace(/^\//, '')
+      return `${endpoint}/${tenancyId}/${path}`
+    }
+
+    return {
+      get: (path: string) => {
+        const effect = E.gen(function* (_) {
           const headers = {
-            'Content-Type': 'application/json',
             'Accept': 'application/json',
             'X-CLIENT-ID': clientId,
           }
 
-          // drop leading /
-          const path = _path.replace(/^\//, '')
-          const url = `${endpoint}/${tenancyId}/${path}`
+          const url = buildUrl(path)
 
           const res = yield* _(
             E.tryPromise({
@@ -93,34 +129,9 @@ export const NetworkServiceLive = Layer.effect(
             }),
           )
 
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          const json = yield* _(
-            E.tryPromise({
-              try: () => res.json() as Promise<unknown>,
-              catch: e =>
-                new NetworkError({
-                  message: 'Unable to extract json response from ' + url,
-                  detail: String(e),
-                }),
-            }),
-          )
-
-          if (res.status >= 500)
-            yield* _(
-              new NetworkError({
-                message: 'Received 500 response code from ' + url,
-              }),
-            )
-
-          const jsonObject = yield* _(
-            typeof json === 'object' && json !== null
-              ? E.succeed(json)
-              : E.fail(
-                  new NetworkError({
-                    message: `Expected JSON object to be returned from RPC endpoint, actual ${typeof json}`,
-                  }),
-                ),
-          )
+          const json = yield* _(parseJson(res, url))
+          yield* _(assertNo500s(res, url))
+          const jsonObject = yield* _(parseJsonObject(json))
 
           return jsonObject
         })
@@ -130,8 +141,6 @@ export const NetworkServiceLive = Layer.effect(
 
       post: (_path: string, body: string) => {
         const effect = E.gen(function* (_) {
-          const endpoint = maybeEndpoint || 'https://api.passlock.dev'
-
           const headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -139,8 +148,7 @@ export const NetworkServiceLive = Layer.effect(
           }
 
           // drop leading /
-          const path = _path.replace(/^\//, '')
-          const url = `${endpoint}/${tenancyId}/${path}`
+          const url = buildUrl(_path)
 
           const res = yield* _(
             E.tryPromise({
@@ -150,34 +158,9 @@ export const NetworkServiceLive = Layer.effect(
             }),
           )
 
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          const json = yield* _(
-            E.tryPromise({
-              try: () => res.json() as Promise<unknown>,
-              catch: e =>
-                new NetworkError({
-                  message: 'Unable to extract json response from ' + url,
-                  detail: String(e),
-                }),
-            }),
-          )
-
-          if (res.status >= 500)
-            yield* _(
-              new NetworkError({
-                message: 'Received 500 response code from ' + url,
-              }),
-            )
-
-          const jsonObject = yield* _(
-            typeof json === 'object' && json !== null
-              ? E.succeed(json)
-              : E.fail(
-                  new NetworkError({
-                    message: `Expected JSON object to be returned from RPC endpoint, actual ${typeof json}`,
-                  }),
-                ),
-          )
+          const json = yield* _(parseJson(res, url))
+          yield* _(assertNo500s(res, url))
+          const jsonObject = yield* _(parseJsonObject(json))
 
           return jsonObject
         })
@@ -188,9 +171,9 @@ export const NetworkServiceLive = Layer.effect(
   }),
 )
 
-export const makeClient = (context: Context.Context<NetworkService>) =>
+export const makeClient = (context: Context.Context<Dispatcher>) =>
   E.sync(() =>
-    pipe(RequestResolver.provideContext(networkResolver, context), resolver =>
+    pipe(RequestResolver.provideContext(dispatchResolver, context), resolver =>
       Resolver.toClient(resolver),
     ),
   )
@@ -202,7 +185,7 @@ export class RpcClient extends Context.Tag('RpcClient')<RpcClient, RouterOps>() 
 export const RpcClientLive = Layer.effect(
   RpcClient,
   E.gen(function* (_) {
-    const context = yield* _(E.context<NetworkService>())
+    const context = yield* _(E.context<Dispatcher>())
     const client = makeClient(context)
 
     return {

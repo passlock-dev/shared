@@ -3,7 +3,7 @@ import type { Schema } from '@effect/schema'
 import { Context, Effect as E, Layer, LogLevel, Logger, Option as O, Ref, pipe } from 'effect'
 import { assert, describe, expect, test } from 'vitest'
 
-import { NetworkService, RpcClient, RpcClientLive } from './rpc'
+import { Dispatcher, RpcClient, RpcClientLive } from './rpc'
 import { IsExistingUserReq, IsExistingUserRes } from './user'
 import { BadRequest, NetworkError } from '../error/error'
 
@@ -13,7 +13,7 @@ const makeHandler = <Req extends Schema.TaggedRequest.Any>(rpc: Rpc.Rpc<Req, nev
     return Router.toHandlerEffect(router)
   })
 
-export const testNetworkService = <Req extends Schema.TaggedRequest.Any>(
+export const makeDispatcher = <Req extends Schema.TaggedRequest.Any>(
   rpc: Rpc.Rpc<Req, never>,
 ) => ({
   get: () =>
@@ -30,7 +30,7 @@ export const testNetworkService = <Req extends Schema.TaggedRequest.Any>(
 })
 
 describe('RPC client', () => {
-  test('should pass requests onto the handler', async () => {
+  test('should send requests to the handler', async () => {
     const State = Context.GenericTag<Ref.Ref<{ req: O.Option<IsExistingUserReq> }>>('@test/State')
 
     const assertions = E.gen(function* (_) {
@@ -56,21 +56,27 @@ describe('RPC client', () => {
         State,
         // store the received request for later assertions
         E.flatMap(Ref.set({ req: O.some(req) })),
+        // send the response
         E.as(new IsExistingUserRes({ existingUser: true })),
       )
 
     const rpc = Rpc.effect(IsExistingUserReq, respond)
 
-    const networkServiceTest = Layer.effect(
-      NetworkService,
+    // Simulate sending a request over the wire. 
+    // This stubbed dispatcher needs a Ref because it stores
+    // the incoming request in it so we can later assert that
+    // the RPC client is correctly forwarding requests.
+    const dispatcherTest = Layer.effect(
+      Dispatcher,
       pipe(
         State,
         E.map(state => Rpc.provideService(rpc, State, state)),
-        E.map(rpc => testNetworkService(rpc)),
-      ),
+        E.map(rpc => makeDispatcher(rpc)),
+      )
     )
 
-    const liveClient = pipe(RpcClientLive, Layer.provide(networkServiceTest))
+    // Plug our test dispatcher into RPC client
+    const liveClient = pipe(RpcClientLive, Layer.provide(dispatcherTest))
 
     const initState = {
       req: O.none<IsExistingUserReq>(),
@@ -100,8 +106,8 @@ describe('RPC client', () => {
 
     const respond = () => E.fail(badRequest)
     const rpc = Rpc.effect(IsExistingUserReq, respond)
-    const networkService = Layer.succeed(NetworkService, testNetworkService(rpc))
-    const liveClient = pipe(RpcClientLive, Layer.provide(networkService))
+    const dispatcherTest = Layer.succeed(Dispatcher, makeDispatcher(rpc))
+    const liveClient = pipe(RpcClientLive, Layer.provide(dispatcherTest))
 
     const effect = pipe(
       assertions,
@@ -126,13 +132,11 @@ describe('RPC client', () => {
         assert.instanceOf(defect, NetworkError)
       })
 
-      const testNetworkService = {
+      const dispatcherTest = Layer.succeed(Dispatcher, {
         get: () => E.fail(new NetworkError({ message: 'BOOM!' })),
         post: () => E.fail(new NetworkError({ message: 'BOOM!' })),
-      }
-
-      const networkService = Layer.succeed(NetworkService, testNetworkService)
-      const liveClient = pipe(RpcClientLive, Layer.provide(networkService))
+      })
+      const liveClient = pipe(RpcClientLive, Layer.provide(dispatcherTest))
 
       const effect = pipe(
         assertions,
