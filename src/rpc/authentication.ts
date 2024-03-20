@@ -14,13 +14,13 @@ import {
 /* Requests & Responses */
 
 /* Options */
-export class OptionsRes extends S.Class<OptionsRes>()({
+export class OptionsRes extends S.Class<OptionsRes>('auth.optionsRes',)({
   session: S.string,
   publicKey: AuthenticationOptions,
 }) {}
 
 export class OptionsReq extends S.TaggedRequest<OptionsReq>()(
-  'authentication.options',
+  'auth.optionsReq',
   BadRequest,
   OptionsRes,
   {
@@ -30,16 +30,16 @@ export class OptionsReq extends S.TaggedRequest<OptionsReq>()(
 /** // Options */
 
 /* Verification */
-export class VerificationRes extends S.Class<VerificationRes>()({
+export class VerificationRes extends S.Class<VerificationRes>('auth.verifyRes')({
   principal: Principal,
 }) {}
 
 export const VerificationErrors = S.union(BadRequest, Unauthorized, Forbidden, Disabled)
 
-export type VerificationErrors = S.Schema.To<typeof VerificationErrors>
+export type VerificationErrors = S.Schema.Type<typeof VerificationErrors>
 
 export class VerificationReq extends S.TaggedRequest<VerificationReq>()(
-  'authentication.verification',
+  'auth.verifyReq',
   VerificationErrors,
   VerificationRes,
   {

@@ -15,17 +15,17 @@ import {
 /* Requests & Responses */
 
 /* Options */
-export class OptionsRes extends S.Class<OptionsRes>()({
+export class OptionsRes extends S.Class<OptionsRes>('registration.optionsRes')({
   session: S.string,
   publicKey: RegistrationOptions,
 }) {}
 
 export const OptionsErrors = S.union(BadRequest, Duplicate)
 
-export type OptionsErrors = S.Schema.To<typeof OptionsErrors>
+export type OptionsErrors = S.Schema.Type<typeof OptionsErrors>
 
 export class OptionsReq extends S.TaggedRequest<OptionsReq>()(
-  'registration.options',
+  'registration.optionsReq',
   OptionsErrors,
   OptionsRes,
   {
@@ -41,16 +41,16 @@ export class OptionsReq extends S.TaggedRequest<OptionsReq>()(
 /* // Options */
 
 /* Verification */
-export class VerificationRes extends S.Class<VerificationRes>()({
+export class VerificationRes extends S.Class<VerificationRes>('registration.verificationRes')({
   principal: Principal,
 }) {}
 
 export const VerificationErrors = S.union(BadRequest, Duplicate, Unauthorized, Forbidden)
 
-export type VerificationErrors = S.Schema.To<typeof VerificationErrors>
+export type VerificationErrors = S.Schema.Type<typeof VerificationErrors>
 
 export class VerificationReq extends S.TaggedRequest<VerificationReq>()(
-  'registration.verification',
+  'registration.verificationReq',
   VerificationErrors,
   VerificationRes,
   {

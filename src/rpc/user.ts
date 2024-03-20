@@ -8,12 +8,12 @@ import { BadRequest, Disabled, Forbidden, NotFound, Unauthorized } from '../erro
 /* Requests & Responses */
 
 /* Registration status */
-export class IsExistingUserRes extends S.Class<IsExistingUserRes>()({
+export class IsExistingUserRes extends S.Class<IsExistingUserRes>("user.isExistingUserRes")({
   existingUser: S.boolean,
 }) {}
 
 export class IsExistingUserReq extends S.TaggedRequest<IsExistingUserReq>()(
-  'user.isExistingUser',
+  'user.isExistingUserReq',
   BadRequest,
   IsExistingUserRes,
   {
@@ -22,16 +22,16 @@ export class IsExistingUserReq extends S.TaggedRequest<IsExistingUserReq>()(
 ) {}
 
 /* Verify email */
-export class VerifyEmailRes extends S.Class<VerifyEmailRes>()({
+export class VerifyEmailRes extends S.Class<VerifyEmailRes>("user.verifyEmailRes")({
   verified: S.boolean,
 }) {}
 
 export const VerifyEmailErrors = S.union(NotFound, Disabled, Unauthorized, Forbidden)
 
-export type VerifyEmailErrors = S.Schema.To<typeof VerifyEmailErrors>
+export type VerifyEmailErrors = S.Schema.Type<typeof VerifyEmailErrors>
 
 export class VerifyEmailReq extends S.TaggedRequest<VerifyEmailReq>()(
-  'user.verifyEmail',
+  'user.verifyEmailReq',
   VerifyEmailErrors,
   VerifyEmailRes,
   {
