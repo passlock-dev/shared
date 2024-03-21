@@ -3,14 +3,14 @@ import * as Rpc from '@effect/rpc/Rpc'
 import * as S from '@effect/schema/Schema'
 import { Context, Effect as E, pipe } from 'effect'
 
-import { BadRequest, Duplicate, Forbidden, Unauthorized } from '../error/error'
+import { BadRequest, Duplicate, Forbidden, Unauthorized } from '../error/error.js'
 import {
   Principal,
   RegistrationCredential,
   RegistrationOptions,
   UserVerification,
   VerifyEmail,
-} from '../schema/schema'
+} from '../schema/schema.js'
 
 /* Requests & Responses */
 

@@ -2,11 +2,11 @@ import * as Resolver from '@effect/rpc/Resolver'
 import * as Router from '@effect/rpc/Router'
 import { Context, Effect as E, Layer, RequestResolver, Schedule, pipe } from 'effect'
 
-import { type AuthenticationOpts, AuthenticationRouter } from './authentication'
-import { type PreConnectOps, PreConnectReq, PreConnectRouter } from './connection'
-import { type RegistrationOps, RegistrationRouter } from './registration'
-import { type UserOps, UserRouter } from './user'
-import { BadRequest, NetworkError } from '../error/error'
+import { type AuthenticationOpts, AuthenticationRouter } from './authentication.js'
+import { type PreConnectOps, PreConnectReq, PreConnectRouter } from './connection.js'
+import { type RegistrationOps, RegistrationRouter } from './registration.js'
+import { type UserOps, UserRouter } from './user.js'
+import { BadRequest, NetworkError } from '../error/error.js'
 
 /* Services */
 

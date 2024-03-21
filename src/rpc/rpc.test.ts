@@ -3,9 +3,9 @@ import type { Schema } from '@effect/schema'
 import { Context, Effect as E, Layer, LogLevel, Logger, Option as O, Ref, pipe } from 'effect'
 import { assert, describe, expect, test } from 'vitest'
 
-import { Dispatcher, RpcClient, RpcClientLive } from './rpc'
-import { IsExistingUserReq, IsExistingUserRes } from './user'
-import { BadRequest, NetworkError } from '../error/error'
+import { Dispatcher, RpcClient, RpcClientLive } from './rpc.js'
+import { IsExistingUserReq, IsExistingUserRes } from './user.js'
+import { BadRequest, NetworkError } from '../error/error.js'
 
 const makeHandler = <Req extends Schema.TaggedRequest.Any>(rpc: Rpc.Rpc<Req, never>) =>
   E.sync(() => {
