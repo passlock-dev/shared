@@ -14,7 +14,7 @@ import {
 /* Requests & Responses */
 
 /* Options */
-export class OptionsRes extends S.Class<OptionsRes>('auth.optionsRes',)({
+export class OptionsRes extends S.Class<OptionsRes>('auth.optionsRes')({
   session: S.string,
   publicKey: AuthenticationOptions,
 }) {}

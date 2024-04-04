@@ -13,9 +13,7 @@ const makeHandler = <Req extends Schema.TaggedRequest.Any>(rpc: Rpc.Rpc<Req, nev
     return Router.toHandlerEffect(router)
   })
 
-export const makeDispatcher = <Req extends Schema.TaggedRequest.Any>(
-  rpc: Rpc.Rpc<Req, never>,
-) => ({
+export const makeDispatcher = <Req extends Schema.TaggedRequest.Any>(rpc: Rpc.Rpc<Req, never>) => ({
   get: () =>
     E.succeed({
       /* empty object */
@@ -62,7 +60,7 @@ describe('RPC client', () => {
 
     const rpc = Rpc.effect(IsExistingUserReq, respond)
 
-    // Simulate sending a request over the wire. 
+    // Simulate sending a request over the wire.
     // This stubbed dispatcher needs a Ref because it stores
     // the incoming request in it so we can later assert that
     // the RPC client is correctly forwarding requests.
@@ -72,7 +70,7 @@ describe('RPC client', () => {
         State,
         E.map(state => Rpc.provideService(rpc, State, state)),
         E.map(rpc => makeDispatcher(rpc)),
-      )
+      ),
     )
 
     // Plug our test dispatcher into RPC client

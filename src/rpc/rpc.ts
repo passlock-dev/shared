@@ -1,4 +1,5 @@
-import * as Resolver from '@effect/rpc/Resolver'
+import { toClient } from '@effect/rpc/Resolver'
+import { make as makeEffect } from '@effect/rpc/ResolverNoStream'
 import * as Router from '@effect/rpc/Router'
 import { Context, Effect as E, Layer, RequestResolver, Schedule, pipe } from 'effect'
 
@@ -38,9 +39,9 @@ export class RetrySchedule extends Context.Tag('RetrySchedule')<
 /** Aggregates all the routes and requires all handlers */
 const router = Router.make(PreConnectRouter, UserRouter, RegistrationRouter, AuthenticationRouter)
 
-/** 
+/**
  * Express or API gateway lambdas plugs into this. Usage:
- * 
+ *
  * 1. Endpoint parses incoming request into a json object
  * 2. Call this handler, passing the object
  * 3. Serialize the response and send it over the wire
@@ -53,7 +54,7 @@ export const RpcHandler = (message: object) =>
   )
 
 /** Fires off requests using a Dispatcher */
-export const dispatchResolver = Resolver.makeEffect(u => {
+export const dispatchResolver = makeEffect(u => {
   return E.gen(function* (_) {
     const dispatcher = yield* _(Dispatcher)
 
@@ -76,21 +77,25 @@ export const DispatcherLive = Layer.effect(
     const { tenancyId, clientId, endpoint: maybeEndpoint } = yield* _(RpcConfig)
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const parseJson = (res: Response, url: string) => E.tryPromise({
-      try: () => res.json() as Promise<unknown>,
-      catch: e => new NetworkError({
-        message: 'Unable to extract json response from ' + url,
-        detail: String(e),
-      }),
-    })
+    const parseJson = (res: Response, url: string) =>
+      E.tryPromise({
+        try: () => res.json() as Promise<unknown>,
+        catch: e =>
+          new NetworkError({
+            message: 'Unable to extract json response from ' + url,
+            detail: String(e),
+          }),
+      })
 
     // 400 errors are reflected in the RPC response error channel
     // so in network terms they're still "ok"
     const assertNo500s = (res: Response, url: string) => {
       if (res.status >= 500) {
-        return E.fail(new NetworkError({
-          message: 'Received 500 response code from ' + url,
-        })) 
+        return E.fail(
+          new NetworkError({
+            message: 'Received 500 response code from ' + url,
+          }),
+        )
       } else return E.unit
     }
 
@@ -98,10 +103,10 @@ export const DispatcherLive = Layer.effect(
       return typeof json === 'object' && json !== null
         ? E.succeed(json)
         : E.fail(
-          new NetworkError({
-            message: `Expected JSON object to be returned from RPC endpoint, actual ${typeof json}`,
-          })
-        )
+            new NetworkError({
+              message: `Expected JSON object to be returned from RPC endpoint, actual ${typeof json}`,
+            }),
+          )
     }
 
     const buildUrl = (_path: string) => {
@@ -173,9 +178,7 @@ export const DispatcherLive = Layer.effect(
 
 export const makeClient = (context: Context.Context<Dispatcher>) =>
   E.sync(() =>
-    pipe(RequestResolver.provideContext(dispatchResolver, context), resolver =>
-      Resolver.toClient(resolver),
-    ),
+    pipe(RequestResolver.provideContext(dispatchResolver, context), resolver => toClient(resolver)),
   )
 
 export type RouterOps = PreConnectOps & UserOps & RegistrationOps & AuthenticationOpts

@@ -4,7 +4,9 @@ import * as S from '@effect/schema/Schema'
 import { Context, Effect as E, pipe } from 'effect'
 
 /* Requests & Responses */
-export class PreConnectRes extends S.Class<PreConnectRes>('preConnect.res')({ warmed: S.boolean }) {}
+export class PreConnectRes extends S.Class<PreConnectRes>('preConnect.res')({
+  warmed: S.boolean,
+}) {}
 
 export class PreConnectReq extends S.TaggedRequest<PreConnectReq>()(
   'preConnect.res',

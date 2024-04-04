@@ -8,7 +8,7 @@ import { BadRequest, Disabled, Forbidden, NotFound, Unauthorized } from '../erro
 /* Requests & Responses */
 
 /* Registration status */
-export class IsExistingUserRes extends S.Class<IsExistingUserRes>("user.isExistingUserRes")({
+export class IsExistingUserRes extends S.Class<IsExistingUserRes>('user.isExistingUserRes')({
   existingUser: S.boolean,
 }) {}
 
@@ -22,7 +22,7 @@ export class IsExistingUserReq extends S.TaggedRequest<IsExistingUserReq>()(
 ) {}
 
 /* Verify email */
-export class VerifyEmailRes extends S.Class<VerifyEmailRes>("user.verifyEmailRes")({
+export class VerifyEmailRes extends S.Class<VerifyEmailRes>('user.verifyEmailRes')({
   verified: S.boolean,
 }) {}
 
