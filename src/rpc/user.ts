@@ -3,6 +3,8 @@ import * as Rpc from '@effect/rpc/Rpc'
 import * as S from '@effect/schema/Schema'
 import { Context, Effect as E, pipe } from 'effect'
 
+import { Principal } from '../schema/schema.js'
+
 import { BadRequest, Disabled, Forbidden, NotFound, Unauthorized } from '../error/error.js'
 
 /* Requests & Responses */
@@ -23,10 +25,10 @@ export class IsExistingUserReq extends S.TaggedRequest<IsExistingUserReq>()(
 
 /* Verify email */
 export class VerifyEmailRes extends S.Class<VerifyEmailRes>('user.verifyEmailRes')({
-  verified: S.boolean,
+  principal: Principal,
 }) {}
 
-export const VerifyEmailErrors = S.union(NotFound, Disabled, Unauthorized, Forbidden)
+export const VerifyEmailErrors = S.union(BadRequest, NotFound, Disabled, Unauthorized, Forbidden)
 
 export type VerifyEmailErrors = S.Schema.Type<typeof VerifyEmailErrors>
 

@@ -11,7 +11,20 @@ export class ParsingError extends S.TaggedError<ParsingError>()('ParsingError', 
 
 /* Components */
 
-export const VerifyEmail = S.union(S.literal('link'), S.literal('code'))
+export const VerifyEmailLink = S.struct({
+  method: S.literal('link'),
+  redirectUrl: S.string
+})
+
+export type VerifyEmailLink = S.Schema.Type<typeof VerifyEmailLink>
+
+export const VerifyEmailCode = S.struct({
+  method: S.literal('code'),
+})
+
+export type VerifyEmailCode = S.Schema.Type<typeof VerifyEmailCode>
+
+export const VerifyEmail = S.union(VerifyEmailLink, VerifyEmailCode)
 
 export type VerifyEmail = S.Schema.Type<typeof VerifyEmail>
 
