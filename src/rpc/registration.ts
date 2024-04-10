@@ -15,7 +15,7 @@ import {
 /* Requests & Responses */
 
 /* Options */
-export class OptionsRes extends S.Class<OptionsRes>('registration.optionsRes')({
+export class OptionsRes extends S.Class<OptionsRes>('@registration/OptionsRes')({
   session: S.string,
   publicKey: RegistrationOptions,
 }) {}
@@ -25,13 +25,13 @@ export const OptionsErrors = S.union(BadRequest, Duplicate)
 export type OptionsErrors = S.Schema.Type<typeof OptionsErrors>
 
 export class OptionsReq extends S.TaggedRequest<OptionsReq>()(
-  'registration.optionsReq',
+  '@registration/OptionsReq',
   OptionsErrors,
   OptionsRes,
   {
     email: S.string,
-    firstName: S.string,
-    lastName: S.string,
+    givenName: S.string,
+    familyName: S.string,
     userVerification: S.optional(UserVerification),
     verifyEmail: S.optional(VerifyEmail),
     redirectUrl: S.optional(S.string),
@@ -41,7 +41,7 @@ export class OptionsReq extends S.TaggedRequest<OptionsReq>()(
 /* // Options */
 
 /* Verification */
-export class VerificationRes extends S.Class<VerificationRes>('registration.verificationRes')({
+export class VerificationRes extends S.Class<VerificationRes>('@registration/VerificationRes')({
   principal: Principal,
 }) {}
 
@@ -50,7 +50,7 @@ export const VerificationErrors = S.union(BadRequest, Duplicate, Unauthorized, F
 export type VerificationErrors = S.Schema.Type<typeof VerificationErrors>
 
 export class VerificationReq extends S.TaggedRequest<VerificationReq>()(
-  'registration.verificationReq',
+  '@registration/VerificationReq',
   VerificationErrors,
   VerificationRes,
   {
@@ -71,7 +71,7 @@ export type RegistrationOps = {
 }
 
 /** The server should implement this interface */
-export class RegistrationHandler extends Context.Tag('RegistrationHandler')<
+export class RegistrationHandler extends Context.Tag('@registration/RegistrationHandler')<
   RegistrationHandler,
   RegistrationOps
 >() {}

@@ -49,7 +49,7 @@ export type UserOps = {
 }
 
 /** The server should implement this interface */
-export class UserHandler extends Context.Tag('UserHandler')<UserHandler, UserOps>() {}
+export class UserHandler extends Context.Tag('@user/UserHandler')<UserHandler, UserOps>() {}
 
 /** Depends on a UserHandler to actually do the work  */
 export const UserRouter = Router.make(

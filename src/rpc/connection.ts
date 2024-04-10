@@ -4,12 +4,12 @@ import * as S from '@effect/schema/Schema'
 import { Context, Effect as E, pipe } from 'effect'
 
 /* Requests & Responses */
-export class PreConnectRes extends S.Class<PreConnectRes>('preConnect.res')({
+export class PreConnectRes extends S.Class<PreConnectRes>('@connection/PreConnectRes')({
   warmed: S.boolean,
 }) {}
 
 export class PreConnectReq extends S.TaggedRequest<PreConnectReq>()(
-  'preConnect.res',
+  '@connection/PreConnectReq',
   S.never,
   PreConnectRes,
   {},
@@ -21,7 +21,7 @@ export type PreConnectOps = {
 }
 
 /** The server should implement this interface */
-export class ConnectionHandler extends Context.Tag('PreConnectHandler')<
+export class ConnectionHandler extends Context.Tag('@connection/PreConnectHandler')<
   ConnectionHandler,
   PreConnectOps
 >() {}

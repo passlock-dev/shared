@@ -175,12 +175,23 @@ export type AuthenticationCredential = S.Schema.Type<typeof AuthenticationCreden
 /** Represents a successful registration/authentication */
 export const Principal = S.struct({
   token: S.string,
-  subject: S.struct({
+  user: S.struct({
     id: S.string,
-    firstName: S.string,
-    lastName: S.string,
+    givenName: S.string,
+    familyName: S.string,
     email: S.string,
     emailVerified: S.boolean,
+  }),
+  socials: S.struct({
+    google: S.optional(
+      S.struct({
+        id: S.string,
+        givenName: S.string,
+        familyName: S.string,
+        email: S.string,
+        emailVerified: S.boolean
+      })
+    )
   }),
   authStatement: S.struct({
     authType: AuthType,

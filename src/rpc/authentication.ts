@@ -14,13 +14,13 @@ import {
 /* Requests & Responses */
 
 /* Options */
-export class OptionsRes extends S.Class<OptionsRes>('auth.optionsRes')({
+export class OptionsRes extends S.Class<OptionsRes>('@auth/OptionsRes')({
   session: S.string,
   publicKey: AuthenticationOptions,
 }) {}
 
 export class OptionsReq extends S.TaggedRequest<OptionsReq>()(
-  'auth.optionsReq',
+  '@auth/OptionsReq',
   BadRequest,
   OptionsRes,
   {
@@ -30,7 +30,7 @@ export class OptionsReq extends S.TaggedRequest<OptionsReq>()(
 /** // Options */
 
 /* Verification */
-export class VerificationRes extends S.Class<VerificationRes>('auth.verifyRes')({
+export class VerificationRes extends S.Class<VerificationRes>('@auth/VerificationRes')({
   principal: Principal,
 }) {}
 
@@ -39,7 +39,7 @@ export const VerificationErrors = S.union(BadRequest, Unauthorized, Forbidden, D
 export type VerificationErrors = S.Schema.Type<typeof VerificationErrors>
 
 export class VerificationReq extends S.TaggedRequest<VerificationReq>()(
-  'auth.verifyReq',
+  '@auth/VerificationReq',
   VerificationErrors,
   VerificationRes,
   {
@@ -50,7 +50,7 @@ export class VerificationReq extends S.TaggedRequest<VerificationReq>()(
 /* // Verification */
 
 /** Router operations */
-export type AuthenticationOpts = {
+export type AuthenticationOps = {
   getAuthenticationOptions: (req: OptionsReq) => E.Effect<OptionsRes, BadRequest>
   verifyAuthenticationCredential: (
     req: VerificationReq,
@@ -58,9 +58,9 @@ export type AuthenticationOpts = {
 }
 
 /** The server should implement this interface */
-export class AuthenticationHandler extends Context.Tag('AuthenticationHandler')<
+export class AuthenticationHandler extends Context.Tag('@auth/AuthenticationHandler')<
   AuthenticationHandler,
-  AuthenticationOpts
+  AuthenticationOps
 >() {}
 
 /** Depends on an AuthenticationHandler to actually do the work  */

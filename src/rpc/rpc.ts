@@ -3,15 +3,16 @@ import { make as makeEffect } from '@effect/rpc/ResolverNoStream'
 import * as Router from '@effect/rpc/Router'
 import { Context, Effect as E, Layer, RequestResolver, Schedule, pipe } from 'effect'
 
-import { type AuthenticationOpts, AuthenticationRouter } from './authentication.js'
+import { type AuthenticationOps, AuthenticationRouter } from './authentication.js'
 import { type PreConnectOps, PreConnectReq, PreConnectRouter } from './connection.js'
 import { type RegistrationOps, RegistrationRouter } from './registration.js'
+import { type SocialOps, SocialRouter } from './social.js'
 import { type UserOps, UserRouter } from './user.js'
 import { BadRequest, NetworkError } from '../error/error.js'
 
 /* Services */
 
-export class RpcConfig extends Context.Tag('RpcConfig')<
+export class RpcConfig extends Context.Tag('@rpc/RpcConfig')<
   RpcConfig,
   {
     endpoint?: string
@@ -21,7 +22,7 @@ export class RpcConfig extends Context.Tag('RpcConfig')<
 >() {}
 
 /** To send the JSON to the backend */
-export class Dispatcher extends Context.Tag('Dispatcher')<
+export class Dispatcher extends Context.Tag('@rpc/Dispatcher')<
   Dispatcher,
   {
     get: (path: string) => E.Effect<object, NetworkError>
@@ -29,7 +30,7 @@ export class Dispatcher extends Context.Tag('Dispatcher')<
   }
 >() {}
 
-export class RetrySchedule extends Context.Tag('RetrySchedule')<
+export class RetrySchedule extends Context.Tag('@rpc/RetrySchedule')<
   RetrySchedule,
   {
     schedule: Schedule.Schedule<unknown>
@@ -37,7 +38,13 @@ export class RetrySchedule extends Context.Tag('RetrySchedule')<
 >() {}
 
 /** Aggregates all the routes and requires all handlers */
-const router = Router.make(PreConnectRouter, UserRouter, RegistrationRouter, AuthenticationRouter)
+const router = Router.make(
+  PreConnectRouter, 
+  UserRouter, 
+  RegistrationRouter, 
+  AuthenticationRouter, 
+  SocialRouter
+)
 
 /**
  * Express or API gateway lambdas plugs into this. Usage:
@@ -181,9 +188,9 @@ export const makeClient = (context: Context.Context<Dispatcher>) =>
     pipe(RequestResolver.provideContext(dispatchResolver, context), resolver => toClient(resolver)),
   )
 
-export type RouterOps = PreConnectOps & UserOps & RegistrationOps & AuthenticationOpts
+export type RouterOps = PreConnectOps & UserOps & RegistrationOps & AuthenticationOps & SocialOps
 
-export class RpcClient extends Context.Tag('RpcClient')<RpcClient, RouterOps>() {}
+export class RpcClient extends Context.Tag('@rpc/RpcClient')<RpcClient, RouterOps>() {}
 
 export const RpcClientLive = Layer.effect(
   RpcClient,
@@ -199,6 +206,7 @@ export const RpcClientLive = Layer.effect(
       verifyRegistrationCredential: req => E.flatMap(client, c => c(req)),
       getAuthenticationOptions: req => E.flatMap(client, c => c(req)),
       verifyAuthenticationCredential: req => E.flatMap(client, c => c(req)),
+      verifyIdToken: req => E.flatMap(client, c => c(req))
     }
   }),
 )
