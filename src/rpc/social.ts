@@ -3,7 +3,7 @@ import * as Rpc from '@effect/rpc/Rpc'
 import * as S from '@effect/schema/Schema'
 import { Context, Effect as E, pipe } from 'effect'
 
-import { BadRequest, Disabled, Forbidden, Unauthorized } from '../error/error.js'
+import { BadRequest, Disabled, Duplicate, Forbidden, Unauthorized } from '../error/error.js'
 import {
   Principal
 } from '../schema/schema.js'
@@ -13,7 +13,7 @@ import {
 /* Verification */
 export class VerificationRes extends S.Class<VerificationRes>('@social@VerificationRes')({ principal: Principal }) {}
 
-export const VerificationErrors = S.union(BadRequest, Unauthorized, Forbidden, Disabled)
+export const VerificationErrors = S.union(BadRequest, Unauthorized, Forbidden, Disabled, Duplicate)
 
 export type VerificationErrors = S.Schema.Type<typeof VerificationErrors>
 
