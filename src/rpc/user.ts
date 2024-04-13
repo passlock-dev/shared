@@ -12,6 +12,7 @@ import { BadRequest, Disabled, Forbidden, NotFound, Unauthorized } from '../erro
 /* Registration status */
 export class IsExistingUserRes extends S.Class<IsExistingUserRes>('user.isExistingUserRes')({
   existingUser: S.boolean,
+  detail: S.optional(S.string),
 }) {}
 
 export class IsExistingUserReq extends S.TaggedRequest<IsExistingUserReq>()(

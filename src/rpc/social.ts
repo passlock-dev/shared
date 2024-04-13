@@ -3,7 +3,7 @@ import * as Rpc from '@effect/rpc/Rpc'
 import * as S from '@effect/schema/Schema'
 import { Context, Effect as E, pipe } from 'effect'
 
-import { BadRequest, Disabled, Duplicate, Forbidden, Unauthorized } from '../error/error.js'
+import { BadRequest, Disabled, Duplicate, Forbidden, NotFound, Unauthorized } from '../error/error.js'
 import {
   Principal
 } from '../schema/schema.js'
@@ -11,16 +11,30 @@ import {
 /* Requests & Responses */
 
 /* Verification */
-export class VerificationRes extends S.Class<VerificationRes>('@social@VerificationRes')({ principal: Principal }) {}
+export class OidcRes extends S.Class<OidcRes>('@social@OidcRes')({ principal: Principal }) {}
 
-export const VerificationErrors = S.union(BadRequest, Unauthorized, Forbidden, Disabled, Duplicate)
+export const RegisterOidcErrors = S.union(BadRequest, Unauthorized, Forbidden, Disabled, Duplicate)
 
-export type VerificationErrors = S.Schema.Type<typeof VerificationErrors>
+export type RegisterOidcErrors = S.Schema.Type<typeof RegisterOidcErrors>
 
-export class OIDCReq extends S.TaggedRequest<OIDCReq>()(
-  '@social@OidcReq',
-  VerificationErrors,
-  VerificationRes,
+export class RegisterOidcReq extends S.TaggedRequest<RegisterOidcReq>()(
+  '@social/RegisterOidcReq',
+  RegisterOidcErrors,
+  OidcRes,
+  {
+    provider: S.literal('google'),
+    idToken: S.string,
+  },
+) {}
+
+export const AuthenticateOidcErrors = S.union(BadRequest, Unauthorized, Forbidden, Disabled, NotFound)
+
+export type AuthenticateOidcErrors = S.Schema.Type<typeof AuthenticateOidcErrors>
+
+export class AuthenticateOidcReq extends S.TaggedRequest<AuthenticateOidcReq>()(
+  '@social/AuthenticateOidcReq',
+  AuthenticateOidcErrors,
+  OidcRes,
   {
     provider: S.literal('google'),
     idToken: S.string,
@@ -30,9 +44,13 @@ export class OIDCReq extends S.TaggedRequest<OIDCReq>()(
 
 /** Router operations */
 export type SocialOps = {
-  verifyIdToken: (
-    req: OIDCReq,
-  ) => E.Effect<VerificationRes, VerificationErrors>
+  registerOidc: (
+    req: RegisterOidcReq,
+  ) => E.Effect<OidcRes, RegisterOidcErrors>
+
+  authenticateOidc: (
+    req: AuthenticateOidcReq,
+  ) => E.Effect<OidcRes, AuthenticateOidcErrors>
 }
 
 /** The server should implement this interface */
@@ -43,10 +61,16 @@ export class SocialHandler extends Context.Tag('@social/AuthenticationHandler')<
 
 /** Depends on an AuthenticationHandler to actually do the work  */
 export const SocialRouter = Router.make(
-  Rpc.effect(OIDCReq, req =>
+  Rpc.effect(RegisterOidcReq, req =>
     pipe(
       SocialHandler,
-      E.flatMap(handler => handler.verifyIdToken(req)),
+      E.flatMap(handler => handler.registerOidc(req)),
+    ),
+  ),
+  Rpc.effect(AuthenticateOidcReq, req =>
+    pipe(
+      SocialHandler,
+      E.flatMap(handler => handler.authenticateOidc(req)),
     ),
   ),
 )

@@ -37,7 +37,7 @@ export class RetrySchedule extends Context.Tag('@rpc/RetrySchedule')<
   }
 >() {}
 
-/** Aggregates all the routes and requires all handlers */
+/** Aggregates all the routes */
 const router = Router.make(
   PreConnectRouter, 
   UserRouter, 
@@ -51,7 +51,7 @@ const router = Router.make(
  *
  * 1. Endpoint parses incoming request into a json object
  * 2. Call this handler, passing the object
- * 3. Serialize the response and send it over the wire
+ * 3. Serialize the response and send it back over the wire
  */
 export const RpcHandler = (message: object) =>
   pipe(
@@ -183,10 +183,11 @@ export const DispatcherLive = Layer.effect(
   }),
 )
 
-export const makeClient = (context: Context.Context<Dispatcher>) =>
-  E.sync(() =>
+export const makeClient = (context: Context.Context<Dispatcher>) => {
+  return E.sync(() =>
     pipe(RequestResolver.provideContext(dispatchResolver, context), resolver => toClient(resolver)),
   )
+}
 
 export type RouterOps = PreConnectOps & UserOps & RegistrationOps & AuthenticationOps & SocialOps
 
@@ -206,7 +207,8 @@ export const RpcClientLive = Layer.effect(
       verifyRegistrationCredential: req => E.flatMap(client, c => c(req)),
       getAuthenticationOptions: req => E.flatMap(client, c => c(req)),
       verifyAuthenticationCredential: req => E.flatMap(client, c => c(req)),
-      verifyIdToken: req => E.flatMap(client, c => c(req))
+      registerOidc: req => E.flatMap(client, c => c(req)),
+      authenticateOidc: req => E.flatMap(client, c => c(req))
     }
   }),
 )

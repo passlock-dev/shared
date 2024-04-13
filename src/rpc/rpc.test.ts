@@ -55,7 +55,10 @@ describe('RPC client', () => {
         // store the received request for later assertions
         E.flatMap(Ref.set({ req: O.some(req) })),
         // send the response
-        E.as(new IsExistingUserRes({ existingUser: true })),
+        E.as(new IsExistingUserRes({ 
+          existingUser: true, 
+          detail: 'Please login with your email'
+        })),
       )
 
     const rpc = Rpc.effect(IsExistingUserReq, respond)

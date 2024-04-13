@@ -70,7 +70,9 @@ const AuthenticatorSelection = S.struct({
   userVerification: optional(UserVerification),
 })
 
-const AuthType = S.union(S.literal('email'), S.literal('passkey'))
+export const AuthType = S.literal('email', 'google', 'passkey')
+
+export type AuthType = S.Schema.Type<typeof AuthType>
 
 /* Registration */
 
