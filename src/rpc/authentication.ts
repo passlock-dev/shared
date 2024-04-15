@@ -3,7 +3,8 @@ import * as Rpc from '@effect/rpc/Rpc'
 import * as S from '@effect/schema/Schema'
 import { Context, Effect as E, pipe } from 'effect'
 
-import { BadRequest, Disabled, Forbidden, Unauthorized } from '../error/error.js'
+import { BadRequest, NotFound, Disabled, Forbidden, Unauthorized } from '../error/error.js'
+
 import {
   AuthenticationCredential,
   AuthenticationOptions,
@@ -19,11 +20,16 @@ export class OptionsRes extends S.Class<OptionsRes>('@auth/OptionsRes')({
   publicKey: AuthenticationOptions,
 }) {}
 
+export const OptionsErrors = S.union(BadRequest, NotFound)
+
+export type OptionsErrors = S.Schema.Type<typeof OptionsErrors>
+
 export class OptionsReq extends S.TaggedRequest<OptionsReq>()(
   '@auth/OptionsReq',
-  BadRequest,
+  OptionsErrors,
   OptionsRes,
   {
+    email: S.optional(S.string, { exact: true }),
     userVerification: S.optional(UserVerification, { exact: true }),
   },
 ) {}
@@ -51,7 +57,10 @@ export class VerificationReq extends S.TaggedRequest<VerificationReq>()(
 
 /** Router operations */
 export type AuthenticationOps = {
-  getAuthenticationOptions: (req: OptionsReq) => E.Effect<OptionsRes, BadRequest>
+  getAuthenticationOptions: (
+    req: OptionsReq
+  ) => E.Effect<OptionsRes, OptionsErrors>
+  
   verifyAuthenticationCredential: (
     req: VerificationReq,
   ) => E.Effect<VerificationRes, VerificationErrors>
