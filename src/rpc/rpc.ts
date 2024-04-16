@@ -208,7 +208,8 @@ export const RpcClientLive = Layer.effect(
       getAuthenticationOptions: req => E.flatMap(client, c => c(req)),
       verifyAuthenticationCredential: req => E.flatMap(client, c => c(req)),
       registerOidc: req => E.flatMap(client, c => c(req)),
-      authenticateOidc: req => E.flatMap(client, c => c(req))
+      authenticateOidc: req => E.flatMap(client, c => c(req)),
+      resendVerificationEmail: req => E.flatMap(client, c => c(req)),
     }
   }),
 )

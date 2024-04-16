@@ -5,12 +5,12 @@ import { Context, Effect as E, pipe } from 'effect'
 
 /* Requests & Responses */
 export class PreConnectRes extends S.Class<PreConnectRes>('@connection/PreConnectRes')({
-  warmed: S.boolean,
+  warmed: S.Boolean,
 }) {}
 
 export class PreConnectReq extends S.TaggedRequest<PreConnectReq>()(
   '@connection/PreConnectReq',
-  S.never,
+  S.Never,
   PreConnectRes,
   {},
 ) {}

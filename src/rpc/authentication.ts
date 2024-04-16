@@ -16,11 +16,11 @@ import {
 
 /* Options */
 export class OptionsRes extends S.Class<OptionsRes>('@auth/OptionsRes')({
-  session: S.string,
+  session: S.String,
   publicKey: AuthenticationOptions,
 }) {}
 
-export const OptionsErrors = S.union(BadRequest, NotFound)
+export const OptionsErrors = S.Union(BadRequest, NotFound)
 
 export type OptionsErrors = S.Schema.Type<typeof OptionsErrors>
 
@@ -29,7 +29,7 @@ export class OptionsReq extends S.TaggedRequest<OptionsReq>()(
   OptionsErrors,
   OptionsRes,
   {
-    email: S.optional(S.string, { exact: true }),
+    email: S.optional(S.String, { exact: true }),
     userVerification: S.optional(UserVerification, { exact: true }),
   },
 ) {}
@@ -40,7 +40,7 @@ export class VerificationRes extends S.Class<VerificationRes>('@auth/Verificatio
   principal: Principal,
 }) {}
 
-export const VerificationErrors = S.union(BadRequest, Unauthorized, Forbidden, Disabled)
+export const VerificationErrors = S.Union(BadRequest, Unauthorized, Forbidden, Disabled)
 
 export type VerificationErrors = S.Schema.Type<typeof VerificationErrors>
 
@@ -49,7 +49,7 @@ export class VerificationReq extends S.TaggedRequest<VerificationReq>()(
   VerificationErrors,
   VerificationRes,
   {
-    session: S.string,
+    session: S.String,
     credential: AuthenticationCredential,
   },
 ) {}

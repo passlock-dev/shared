@@ -13,7 +13,7 @@ import {
 /* Verification */
 export class OidcRes extends S.Class<OidcRes>('@social@OidcRes')({ principal: Principal }) {}
 
-export const RegisterOidcErrors = S.union(BadRequest, Unauthorized, Forbidden, Disabled, Duplicate)
+export const RegisterOidcErrors = S.Union(BadRequest, Unauthorized, Forbidden, Disabled, Duplicate)
 
 export type RegisterOidcErrors = S.Schema.Type<typeof RegisterOidcErrors>
 
@@ -22,12 +22,12 @@ export class RegisterOidcReq extends S.TaggedRequest<RegisterOidcReq>()(
   RegisterOidcErrors,
   OidcRes,
   {
-    provider: S.literal('google'),
-    idToken: S.string,
+    provider: S.Literal('google'),
+    idToken: S.String,
   },
 ) {}
 
-export const AuthenticateOidcErrors = S.union(BadRequest, Unauthorized, Forbidden, Disabled, NotFound)
+export const AuthenticateOidcErrors = S.Union(BadRequest, Unauthorized, Forbidden, Disabled, NotFound)
 
 export type AuthenticateOidcErrors = S.Schema.Type<typeof AuthenticateOidcErrors>
 
@@ -36,8 +36,8 @@ export class AuthenticateOidcReq extends S.TaggedRequest<AuthenticateOidcReq>()(
   AuthenticateOidcErrors,
   OidcRes,
   {
-    provider: S.literal('google'),
-    idToken: S.string,
+    provider: S.Literal('google'),
+    idToken: S.String,
   },
 ) {}
 /* // Verification */

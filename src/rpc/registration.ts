@@ -16,11 +16,11 @@ import {
 
 /* Options */
 export class OptionsRes extends S.Class<OptionsRes>('@registration/OptionsRes')({
-  session: S.string,
+  session: S.String,
   publicKey: RegistrationOptions,
 }) {}
 
-export const OptionsErrors = S.union(BadRequest, Duplicate)
+export const OptionsErrors = S.Union(BadRequest, Duplicate)
 
 export type OptionsErrors = S.Schema.Type<typeof OptionsErrors>
 
@@ -29,12 +29,12 @@ export class OptionsReq extends S.TaggedRequest<OptionsReq>()(
   OptionsErrors,
   OptionsRes,
   {
-    email: S.string,
-    givenName: S.string,
-    familyName: S.string,
+    email: S.String,
+    givenName: S.String,
+    familyName: S.String,
     userVerification: S.optional(UserVerification),
     verifyEmail: S.optional(VerifyEmail),
-    redirectUrl: S.optional(S.string),
+    redirectUrl: S.optional(S.String),
   },
 ) {}
 
@@ -45,7 +45,7 @@ export class VerificationRes extends S.Class<VerificationRes>('@registration/Ver
   principal: Principal,
 }) {}
 
-export const VerificationErrors = S.union(BadRequest, Duplicate, Unauthorized, Forbidden)
+export const VerificationErrors = S.Union(BadRequest, Duplicate, Unauthorized, Forbidden)
 
 export type VerificationErrors = S.Schema.Type<typeof VerificationErrors>
 
@@ -54,10 +54,10 @@ export class VerificationReq extends S.TaggedRequest<VerificationReq>()(
   VerificationErrors,
   VerificationRes,
   {
-    session: S.string,
+    session: S.String,
     credential: RegistrationCredential,
     verifyEmail: S.optional(VerifyEmail),
-    redirectUrl: S.optional(S.string),
+    redirectUrl: S.optional(S.String),
   },
 ) {}
 /* // Verification */
