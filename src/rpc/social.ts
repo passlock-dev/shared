@@ -54,7 +54,7 @@ export type SocialOps = {
 }
 
 /** The server should implement this interface */
-export class SocialHandler extends Context.Tag('@social/AuthenticationHandler')<
+export class SocialHandler extends Context.Tag('@social/Handler')<
   SocialHandler,
   SocialOps
 >() {}

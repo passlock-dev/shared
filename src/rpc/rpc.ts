@@ -103,7 +103,7 @@ export const DispatcherLive = Layer.effect(
             message: 'Received 500 response code from ' + url,
           }),
         )
-      } else return E.unit
+      } else return E.void
     }
 
     const parseJsonObject = (json: unknown) => {
@@ -180,7 +180,7 @@ export const DispatcherLive = Layer.effect(
         return E.retry(effect, { schedule })
       },
     }
-  }),
+  })
 )
 
 export const makeClient = (context: Context.Context<Dispatcher>) => {
@@ -209,7 +209,7 @@ export const RpcClientLive = Layer.effect(
       verifyAuthenticationCredential: req => E.flatMap(client, c => c(req)),
       registerOidc: req => E.flatMap(client, c => c(req)),
       authenticateOidc: req => E.flatMap(client, c => c(req)),
-      resendVerificationEmail: req => E.flatMap(client, c => c(req)),
+      resendVerificationEmail: req => E.flatMap(client, c => c(req))
     }
-  }),
+  })
 )
