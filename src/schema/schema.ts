@@ -184,17 +184,6 @@ export const Principal = S.Struct({
     email: S.String,
     emailVerified: S.Boolean,
   }),
-  socials: S.Struct({
-    google: S.optional(
-      S.Struct({
-        id: S.String,
-        givenName: S.String,
-        familyName: S.String,
-        email: S.String,
-        emailVerified: S.Boolean
-      })
-    )
-  }),
   authStatement: S.Struct({
     authType: AuthType,
     userVerified: S.Boolean,
