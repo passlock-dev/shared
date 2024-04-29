@@ -1,6 +1,6 @@
 {
   "name": "@passlock/shared",
-  "version": "0.9.8",
+  "version": "0.9.9",
   "type": "module",
   "description": "Shared code use by Passlock frontend libraries & backend SDKs",
   "keywords": [
@@ -33,11 +33,11 @@
     "ncu:save": "ncu -u -x eslint"
   },
   "dependencies": {
-    "@effect/rpc": "^0.30.8",
-    "@effect/schema": "^0.66.6"
+    "@effect/rpc": "^0.30.10",
+    "@effect/schema": "^0.66.8"
   },
   "peerDependencies": {
-    "effect": "^3.0.0"
+    "effect": "^3.0.5"
   },
   "devDependencies": {
     "@tsconfig/node18": "^18.2.4",
@@ -53,6 +53,6 @@
     "prettier": "^3.2.5",
     "rimraf": "^5.0.5",
     "typescript": "^5.4.5",
-    "vitest": "^1.5.0"
+    "vitest": "^1.5.2"
   }
 }
