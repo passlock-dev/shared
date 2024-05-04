@@ -5,7 +5,7 @@ import { Context, Effect as E, pipe } from 'effect'
 
 import { BadRequest, Disabled, Duplicate, Forbidden, NotFound, Unauthorized } from '../error/error.js'
 import {
-  Principal
+    Principal
 } from '../schema/schema.js'
 
 /* Requests & Responses */

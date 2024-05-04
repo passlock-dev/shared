@@ -3,12 +3,12 @@ import { make as makeEffect } from '@effect/rpc/ResolverNoStream'
 import * as Router from '@effect/rpc/Router'
 import { Context, Effect as E, Layer, RequestResolver, Schedule, pipe } from 'effect'
 
-import { type AuthenticationOps, AuthenticationRouter } from './authentication.js'
-import { type PreConnectOps, PreConnectReq, PreConnectRouter } from './connection.js'
-import { type RegistrationOps, RegistrationRouter } from './registration.js'
-import { type SocialOps, SocialRouter } from './social.js'
-import { type UserOps, UserRouter } from './user.js'
 import { BadRequest, NetworkError } from '../error/error.js'
+import { AuthenticationRouter, type AuthenticationOps } from './authentication.js'
+import { PreConnectReq, PreConnectRouter, type PreConnectOps } from './connection.js'
+import { RegistrationRouter, type RegistrationOps } from './registration.js'
+import { SocialRouter, type SocialOps } from './social.js'
+import { UserRouter, type UserOps } from './user.js'
 
 /* Services */
 
@@ -77,6 +77,8 @@ export const dispatchResolver = makeEffect(u => {
 })<typeof router>()
 
 /** Fires off client requests using fetch */
+/** TODO: Write tests */
+/** TODO: Evaluate platform/http client (if now stable) */
 export const DispatcherLive = Layer.effect(
   Dispatcher,
   E.gen(function* (_) {

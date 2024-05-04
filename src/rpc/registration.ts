@@ -5,11 +5,11 @@ import { Context, Effect as E, pipe } from 'effect'
 
 import { BadRequest, Duplicate, Forbidden, Unauthorized } from '../error/error.js'
 import {
-  Principal,
-  RegistrationCredential,
-  RegistrationOptions,
-  UserVerification,
-  VerifyEmail,
+    Principal,
+    RegistrationCredential,
+    RegistrationOptions,
+    UserVerification,
+    VerifyEmail,
 } from '../schema/schema.js'
 
 /* Requests & Responses */
