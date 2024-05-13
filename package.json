@@ -1,6 +1,6 @@
 {
   "name": "@passlock/shared",
-  "version": "0.9.11",
+  "version": "0.9.12",
   "type": "module",
   "description": "Shared code use by Passlock frontend libraries & backend SDKs",
   "keywords": [
@@ -30,19 +30,19 @@
     "lint:fix": "pnpm run lint --fix",
     "format": "prettier --write \"src/**/*.+(js|ts|json)\"",
     "ncu": "ncu",
-    "ncu:save": "ncu -u -x eslint"
+    "ncu:save": "ncu -u -x eslint -x effect -x @effect/schema -x @effect/rpc"
   },
   "dependencies": {
-    "@effect/rpc": "~0.30.16",
-    "@effect/schema": "~0.66.13",
-    "effect": "~3.1.1"
+    "@effect/rpc": "0.30.23",
+    "@effect/schema": "0.67.1",
+    "effect": "3.1.4"
   },
   "devDependencies": {
     "@tsconfig/node18": "^18.2.4",
-    "@types/node": "^20.12.7",
+    "@types/node": "^20.12.11",
     "@typescript-eslint/eslint-plugin": "^7.8.0",
     "@typescript-eslint/parser": "^7.8.0",
-    "@vitest/coverage-v8": "^1.5.3",
+    "@vitest/coverage-v8": "^1.6.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-import-resolver-typescript": "^3.6.1",
@@ -50,8 +50,8 @@
     "eslint-plugin-prettier": "^5.1.3",
     "fast-check": "^3.18.0",
     "prettier": "^3.2.5",
-    "rimraf": "^5.0.5",
+    "rimraf": "^5.0.7",
     "typescript": "^5.4.5",
-    "vitest": "^1.5.3"
+    "vitest": "^1.6.0"
   }
 }
