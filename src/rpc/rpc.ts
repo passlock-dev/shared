@@ -1,41 +1,15 @@
 import { toClient } from '@effect/rpc/Resolver'
 import { make as makeEffect } from '@effect/rpc/ResolverNoStream'
 import * as Router from '@effect/rpc/Router'
-import { Context, Effect as E, Layer, RequestResolver, Schedule, pipe } from 'effect'
+import { Context, Effect as E, Layer, RequestResolver, pipe } from 'effect'
 
 import { BadRequest, NetworkError } from '../error/error.js'
-import { AuthenticationRouter, type AuthenticationOps } from './authentication.js'
-import { PreConnectReq, PreConnectRouter, type PreConnectOps } from './connection.js'
-import { RegistrationRouter, type RegistrationOps } from './registration.js'
-import { SocialRouter, type SocialOps } from './social.js'
-import { UserRouter, type UserOps } from './user.js'
-
-/* Services */
-
-export class RpcConfig extends Context.Tag('@rpc/RpcConfig')<
-  RpcConfig,
-  {
-    endpoint?: string
-    tenancyId: string
-    clientId: string
-  }
->() {}
-
-/** To send the JSON to the backend */
-export class Dispatcher extends Context.Tag('@rpc/Dispatcher')<
-  Dispatcher,
-  {
-    get: (path: string) => E.Effect<object, NetworkError>
-    post: (path: string, body: string) => E.Effect<object, NetworkError>
-  }
->() {}
-
-export class RetrySchedule extends Context.Tag('@rpc/RetrySchedule')<
-  RetrySchedule,
-  {
-    schedule: Schedule.Schedule<unknown>
-  }
->() {}
+import { AuthenticationHandler, AuthenticationRouter, type AuthenticationOps } from './authentication.js'
+import { RetrySchedule, RpcConfig } from './config.js'
+import { ConnectionHandler, PreConnectReq, PreConnectRouter, type PreConnectOps } from './connection.js'
+import { RegistrationHandler, RegistrationRouter, type RegistrationOps } from './registration.js'
+import { SocialHandler, SocialRouter, type SocialOps } from './social.js'
+import { UserHandler, UserRouter, type UserOps } from './user.js'
 
 /** Aggregates all the routes */
 const router = Router.make(
@@ -46,19 +20,16 @@ const router = Router.make(
   SocialRouter
 )
 
-/**
- * Express or API gateway lambdas plugs into this. Usage:
- *
- * 1. Endpoint parses incoming request into a json object
- * 2. Call this handler, passing the object
- * 3. Serialize the response and send it back over the wire
- */
-export const RpcHandler = (message: object) =>
-  pipe(
-    Router.toHandlerEffect(router),
-    handler => handler(message),
-    E.mapError(e => new BadRequest({ message: 'Unable to parse request', detail: String(e) })),
-  )
+/* Services */
+
+/** To send the JSON to the backend */
+export class Dispatcher extends Context.Tag('@rpc/Dispatcher')<
+  Dispatcher,
+  {
+    get: (path: string) => E.Effect<object, NetworkError>
+    post: (path: string, body: string) => E.Effect<object, NetworkError>
+  }
+>() {}
 
 /** Fires off requests using a Dispatcher */
 export const dispatchResolver = makeEffect(u => {
@@ -185,15 +156,51 @@ export const DispatcherLive = Layer.effect(
   })
 )
 
+/* RPC Server */
+
+export class RpcServer extends Context.Tag('@rpc/RpcServer')<RpcServer, {
+  /**
+   * Express or API gateway lambdas plugs into this. Usage:
+   *
+   * 1. Endpoint parses incoming request into a json object
+   * 2. Call this handler, passing the object
+   * 3. Serialize the response and send it back over the wire
+   */
+  handleRequest: (message: object) => E.Effect<readonly Router.Router.ResponseEffect[], BadRequest>
+}>() {}
+
+export type Handlers = ConnectionHandler | UserHandler | RegistrationHandler | AuthenticationHandler | SocialHandler
+
+const handler = Router.toHandlerEffect(router)
+
+const handleRequest = (message: object) =>
+  pipe(
+    handler(message),
+    E.mapError(e => new BadRequest({ message: 'Unable to parse request', detail: String(e) })),
+  )
+
+export const RpcServerLive = Layer.effect(
+  RpcServer,
+  E.gen(function* (_) {
+    const context = yield* _(E.context<Handlers>())
+
+    return {
+      handleRequest: (message) => pipe(handleRequest(message), E.provide(context))
+    }
+  })
+)
+
+/* RPC Client */
+
+export type RouterOps = PreConnectOps & UserOps & RegistrationOps & AuthenticationOps & SocialOps
+
+export class RpcClient extends Context.Tag('@rpc/RpcClient')<RpcClient, RouterOps>() {}
+
 export const makeClient = (context: Context.Context<Dispatcher>) => {
   return E.sync(() =>
     pipe(RequestResolver.provideContext(dispatchResolver, context), resolver => toClient(resolver)),
   )
 }
-
-export type RouterOps = PreConnectOps & UserOps & RegistrationOps & AuthenticationOps & SocialOps
-
-export class RpcClient extends Context.Tag('@rpc/RpcClient')<RpcClient, RouterOps>() {}
 
 export const RpcClientLive = Layer.effect(
   RpcClient,
