@@ -29,8 +29,13 @@
     "lint": "eslint --ext .ts src",
     "lint:fix": "pnpm run lint --fix",
     "format": "prettier --write \"src/**/*.+(js|ts|json)\"",
-    "ncu": "ncu",
-    "ncu:save": "ncu -u -x eslint -x effect -x @effect/schema -x @effect/rpc -x eslint"
+    "ncu": "ncu --peer -x @effect/* -x effect",
+    "ncu:save": "ncu --peer -u -x @effect/* -x effect"
+  },
+  "dependencies": {
+    "@effect/rpc": "^0.30.40",
+    "@effect/schema": "^0.67.18",
+    "@effect/platform": "^0.55.5"
   },
   "devDependencies": {
     "@tsconfig/node18": "^18.2.4",
@@ -38,7 +43,7 @@
     "@typescript-eslint/eslint-plugin": "^7.12.0",
     "@typescript-eslint/parser": "^7.12.0",
     "@vitest/coverage-v8": "^1.6.0",
-    "eslint": "^8.56.0",
+    "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.29.1",
@@ -48,11 +53,6 @@
     "rimraf": "^5.0.7",
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"
-  },
-  "dependencies": {
-    "@effect/rpc": "^0.30.40",
-    "@effect/schema": "^0.67.18",
-    "@effect/platform": "^0.55.5"
   },
   "peerDependencies": {
     "effect": "^3.2.8"
