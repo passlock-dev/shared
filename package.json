@@ -1,6 +1,6 @@
 {
   "name": "@passlock/shared",
-  "version": "0.9.15",
+  "version": "0.9.16",
   "type": "module",
   "description": "Shared code use by Passlock frontend libraries & backend SDKs",
   "keywords": [
@@ -32,11 +32,6 @@
     "ncu": "ncu --peer -x @effect/* -x effect",
     "ncu:save": "ncu --peer -u -x @effect/* -x effect"
   },
-  "dependencies": {
-    "@effect/rpc": "^0.30.40",
-    "@effect/schema": "^0.67.18",
-    "@effect/platform": "^0.55.5"
-  },
   "devDependencies": {
     "@tsconfig/node18": "^18.2.4",
     "@types/node": "^20.14.1",
@@ -55,6 +50,9 @@
     "vitest": "^1.6.0"
   },
   "peerDependencies": {
-    "effect": "^3.2.8"
+    "effect": "3.4.5",
+    "@effect/rpc": "0.31.16",
+    "@effect/schema": "0.68.14",
+    "@effect/platform": "0.58.16"
   }
 }
