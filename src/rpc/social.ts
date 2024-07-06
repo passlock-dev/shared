@@ -5,52 +5,65 @@ import { Context, Effect as E, pipe } from 'effect'
 
 import { BadRequest, Disabled, Duplicate, Forbidden, NotFound, Unauthorized } from '../error/error.js'
 import {
-    Principal
+  Principal
 } from '../schema/schema.js'
 
-/* Requests & Responses */
+const Provider = S.Literal('apple', 'google')
 
-/* Verification */
-export class OidcRes extends S.Class<OidcRes>('@social@OidcRes')({ principal: Principal }) {}
+/* Registration requests & responses */
+export class PrincipalRes extends S.Class<PrincipalRes>('@social/PrincipalRes')({ principal: Principal }) {}
 
 export const RegisterOidcErrors = S.Union(BadRequest, Unauthorized, Forbidden, Disabled, Duplicate)
 
 export type RegisterOidcErrors = S.Schema.Type<typeof RegisterOidcErrors>
 
+const RegisterOidcPayload = S.Struct({
+  provider: Provider,
+  idToken: S.String,
+  givenName: S.Option(S.String),
+  familyName: S.Option(S.String),
+  nonce: S.String,
+})
+
+export type RegisterOidcPayload = S.Schema.Type<typeof RegisterOidcPayload>
+
 export class RegisterOidcReq extends S.TaggedRequest<RegisterOidcReq>()(
   '@social/RegisterOidcReq',
   RegisterOidcErrors,
-  OidcRes,
-  {
-    provider: S.Literal('google'),
-    idToken: S.String,
-  },
+  PrincipalRes,
+  RegisterOidcPayload['fields']
 ) {}
 
-export const AuthenticateOidcErrors = S.Union(BadRequest, Unauthorized, Forbidden, Disabled, NotFound)
+/* Authentication requests & responses */
+export const AuthOidcErrors = S.Union(BadRequest, Unauthorized, Forbidden, Disabled, NotFound)
 
-export type AuthenticateOidcErrors = S.Schema.Type<typeof AuthenticateOidcErrors>
+export type AuthOidcErrors = S.Schema.Type<typeof AuthOidcErrors>
 
-export class AuthenticateOidcReq extends S.TaggedRequest<AuthenticateOidcReq>()(
-  '@social/AuthenticateOidcReq',
-  AuthenticateOidcErrors,
-  OidcRes,
-  {
-    provider: S.Literal('google'),
-    idToken: S.String,
-  },
+const AuthOidcPayload = S.Struct({
+  provider: Provider,
+  idToken: S.String,
+  nonce: S.String,
+})
+
+export type AuthOidcPayload = S.Schema.Type<typeof AuthOidcPayload>
+
+export class AuthOidcReq extends S.TaggedRequest<AuthOidcReq>()(
+  '@social/AuthOidcReq',
+  AuthOidcErrors,
+  PrincipalRes,
+  AuthOidcPayload['fields']
 ) {}
-/* // Verification */
+
 
 /** Router operations */
 export type SocialOps = {
   registerOidc: (
     req: RegisterOidcReq,
-  ) => E.Effect<OidcRes, RegisterOidcErrors>
+  ) => E.Effect<PrincipalRes, RegisterOidcErrors>
 
   authenticateOidc: (
-    req: AuthenticateOidcReq,
-  ) => E.Effect<OidcRes, AuthenticateOidcErrors>
+    req: AuthOidcReq,
+  ) => E.Effect<PrincipalRes, AuthOidcErrors>
 }
 
 /** The server should implement this interface */
@@ -67,7 +80,7 @@ export const SocialRouter = Router.make(
       E.flatMap(handler => handler.registerOidc(req)),
     ),
   ),
-  Rpc.effect(AuthenticateOidcReq, req =>
+  Rpc.effect(AuthOidcReq, req =>
     pipe(
       SocialHandler,
       E.flatMap(handler => handler.authenticateOidc(req)),
