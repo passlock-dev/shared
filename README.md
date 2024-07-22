@@ -4,18 +4,22 @@
   </a>
 </div>
 
-<a name="readme-top"></a>
-<h1 align="center">Serverless Passkeys</h1>
+<h1 align="center">Passkeys, Social Login & More</h1>
 
+<a name="readme-top"></a>
+<div align="center">
+  <picture align="center">
+    <source srcset="README_assets/repo-banner.dark.svg" media="(prefers-color-scheme: dark)" />
+    <img align="center" width=550 height=50 src="README_assets/repo-banner.svg" />
+  </picture>
   <p align="center">
-    Common code used by the frontend and backend SDKs
-    <br />
-    <a href="https://passlock.dev"><strong>Project website »</strong></a>
-    <br />
-    <a href="https://passlock.dev/#demo">Demo</a>
-    ·
-    <a href="https://docs.passlock.dev">Documentation</a>
-    ·
-    <a href="https://docs.passlock.dev/docs/tutorial/intro">Tutorial</a>
+    Typescript library for next generation authentication. Passkeys, Apple login, Google one-tap and more..
   </p>
 </div>
+
+<br />
+
+> [!IMPORTANT]  
+> **Please see the new [monorepo][monorepo]** - I've moved the JS/TS libraries to a new [monorepo][monorepo]. This repository is now archived.
+
+[monorepo]: https://github.com/passlock-dev/ts-clients
